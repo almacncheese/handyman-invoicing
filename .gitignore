@@ -1,0 +1,5 @@
+.env
+node_modules
+.next
+prisma/migrations
+.DS_Store
