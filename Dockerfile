@@ -1,14 +1,18 @@
 # Multi-stage Coolify-friendly image
 FROM node:20-alpine AS deps
 WORKDIR /app
+# Coolify may inject NODE_ENV=production as a build ARG — that makes `npm ci`
+# skip devDependencies (tailwind postcss, typescript) and break `next build`.
+ENV NODE_ENV=development
 COPY package.json package-lock.json* ./
 RUN npm ci
 
 FROM node:20-alpine AS builder
 WORKDIR /app
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
 RUN npx prisma generate
 RUN npm run build
 
