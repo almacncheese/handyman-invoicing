@@ -7,7 +7,9 @@
 **HandyQuote** — multi-tenant SaaS for handymen/contractors: quote builder (material+margin, labor, flat), public e-sign link, invoice conversion, Authorize.net/mock deposits.
 
 Repo: `almacncheese/handyman-invoicing`  
-Local path: `~/dev/handyman-invoicing`
+Local path: `~/dev/handyman-invoicing`  
+**Production domain:** `https://quickhandyquote.com` (owned at Hostinger registrar; Coolify/VPS — deploy gated on Al)  
+Full DNS + Coolify steps: `DEPLOY.md`
 
 Sister product (single-tenant PHP proof): `~/dev/aim-estimator` (AIM Fencing & Roofing). Do not break AIM deploy; this is a different product.
 
@@ -68,7 +70,9 @@ Verified 2026-07-10: `npm test` 24/24 · `npm run build` green · API smoke logi
 1. Al's explicit go-ahead
 2. `npm test` + `npm run build`
 3. Real `AUTH_SECRET` + DB URL in Coolify
-4. Card payments intentionally disabled until Al green-lights processor work
+4. **`APP_URL=https://quickhandyquote.com`** (share/sign links break if wrong)
+5. DNS A + www for `quickhandyquote.com` → VPS/Coolify (see `DEPLOY.md`)
+6. Card payments intentionally disabled until Al green-lights processor work
 
 ## Active known issues
 

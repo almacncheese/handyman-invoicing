@@ -2,6 +2,8 @@
 
 **Estimates, e-signature, and invoices for field contractors** — multi-tenant SaaS.
 
+**Production domain:** [quickhandyquote.com](https://quickhandyquote.com) (Hostinger-owned; deploy via Coolify — see `DEPLOY.md`).
+
 Live **card payments are intentionally not in this build**. Contractors send professional estimates, customers sign on their phone, and any money received is recorded manually (cash / check / Zelle / Cash App / Venmo).
 
 ## Local setup
@@ -53,6 +55,7 @@ Open http://localhost:3000
 - `AGENT_NOTES.md` — agent memory  
 - `DEPLOY.md` — Coolify later  
 
-## Deploy later
+## Deploy
 
-Domain + Coolify on Hostinger when ready. Set real `AUTH_SECRET` and `DATABASE_URL`. Card payments can plug into the existing payment-record model later.
+Domain **quickhandyquote.com** is set. Coolify checklist + DNS: **`DEPLOY.md`**.  
+Prod env must include `APP_URL=https://quickhandyquote.com`, real `AUTH_SECRET`, and `DATABASE_URL`. Card payments stay deferred until Al green-lights a processor.

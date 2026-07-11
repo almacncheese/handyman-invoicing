@@ -2,7 +2,8 @@
 
 **Product:** HandyQuote (`handyman-invoicing`)  
 **Owner:** Al / Smith Web Co  
-**Stage:** Local product complete (no live card payments) → domain + Coolify later  
+**Stage:** Local product complete (no live card payments) → domain **quickhandyquote.com** owned (Hostinger); Coolify go-live gated on Al  
+**Prod URL:** `https://quickhandyquote.com`
 
 ## Positioning
 

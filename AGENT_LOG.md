@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-07-11 — Domain: quickhandyquote.com
+
+**Did:** Locked production domain decision — `quickhandyquote.com` owned at Hostinger. Updated DEPLOY.md (DNS A/www, Coolify env incl. APP_URL, health/migrate), AGENT_NOTES, PRODUCT_CONTRACT, README, .env.example, metadataBase.
+**Found:** n/a — domain choice only; no deploy run.
+**Status:** Domain named. **Go-live still needs Al’s explicit deploy green-light** + Coolify resource + DNS to VPS.
+
+---
+
 ## 2026-07-11 — Grok: ship hygiene + brand logo
 
 **Did:** Locked in stranded product tree (config → prisma → app → docs commits). Built HandyQuote brand: SVG mark + lockup, rich app icon, `BrandLogo` on marketing/app/auth, favicon metadata. Tests 27/27, typecheck green. Pushed to origin/main.

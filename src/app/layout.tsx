@@ -24,6 +24,9 @@ const mono = IBM_Plex_Mono({
 // when only the CSS variable is set.
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.APP_URL || process.env.NEXTAUTH_URL || 'https://quickhandyquote.com'
+  ),
   title: 'HandyQuote — Estimates for field contractors',
   description:
     'Create professional estimates, collect e-signatures, and track invoices. Built for handymen and field crews.',
