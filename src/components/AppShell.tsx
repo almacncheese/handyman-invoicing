@@ -97,15 +97,18 @@ export function AppShell({
         <div className="border-b border-[var(--warn)] bg-[var(--warn-soft)] px-4 py-2.5 text-center text-sm text-[var(--ink)]">
           Your free trial has ended. Subscribe to <strong>Pro ($29/mo)</strong> to keep sending
           estimates.{' '}
-          <Link href="/pricing" className="font-semibold underline underline-offset-2">
-            View pricing
+          <Link href="/billing" className="font-semibold underline underline-offset-2">
+            Plan details
           </Link>
         </div>
       )}
       {!trialExpired && trialDaysLeft != null && trialDaysLeft <= 5 && trialDaysLeft > 0 && (
         <div className="border-b border-[var(--line)] bg-[var(--pine-soft)] px-4 py-2 text-center text-sm text-[var(--pine-deep)]">
           Trial: <strong>{trialDaysLeft} day{trialDaysLeft === 1 ? '' : 's'}</strong> left · then
-          Pro at $29/mo
+          Pro at $29/mo ·{' '}
+          <Link href="/billing" className="font-semibold underline underline-offset-2">
+            Details
+          </Link>
         </div>
       )}
 

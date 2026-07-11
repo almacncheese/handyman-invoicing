@@ -94,3 +94,10 @@ Verified 2026-07-10: `npm test` 24/24 · `npm run build` green · API smoke logi
 - Ensure admin: `npx tsx scripts/ensure-platform-admin.ts`
 - Env overrides: `PLATFORM_ADMIN_EMAIL`, `PLATFORM_ADMIN_PASSWORD` (never commit real secrets)
 - Capabilities: list all workspaces/users, add user, set Pro/trial, override monthly price cents
+
+## Email (Resend)
+
+- Env: `RESEND_API_KEY`, `RESEND_FROM_EMAIL` (e.g. `HandyQuote <estimates@quickhandyquote.com>`)
+- Domain DNS: verify `quickhandyquote.com` in Resend (SPF/DKIM)
+- Sends: estimate to customer, staff invite, password reset, signed notify to business
+- Without key: actions still work (link copy); email returns `sent: false`

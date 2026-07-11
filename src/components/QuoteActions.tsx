@@ -47,17 +47,37 @@ export function QuoteActions({
     return data.invoice.id as string;
   }
 
-  async function send() {
+  async function send(opts?: { email?: boolean }) {
     await run(async () => {
-      const res = await fetch(`/api/quotes/${quoteId}/send`, { method: 'POST' });
+      const res = await fetch(`/api/quotes/${quoteId}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: opts?.email === true }),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Send failed');
       setShareUrl(data.shareUrl);
-      try {
-        await navigator.clipboard.writeText(data.shareUrl);
-        setMsg('Customer link copied');
-      } catch {
-        setMsg('Customer link ready — copy below');
+      if (opts?.email) {
+        if (data.email?.sent) {
+          setMsg('Estimate emailed to customer + link ready');
+        } else if (data.email?.reason === 'no_recipient') {
+          setMsg('Link ready — add a customer email to send mail');
+        } else if (data.email?.reason === 'not_configured') {
+          setMsg('Link ready — email not configured (RESEND_API_KEY)');
+        } else {
+          setMsg(
+            data.email?.message
+              ? `Link ready — email failed: ${data.email.message}`
+              : 'Link ready — email not sent',
+          );
+        }
+      } else {
+        try {
+          await navigator.clipboard.writeText(data.shareUrl);
+          setMsg('Customer link copied');
+        } catch {
+          setMsg('Customer link ready — copy below');
+        }
       }
       router.refresh();
     });
@@ -136,9 +156,24 @@ export function QuoteActions({
       <div className="panel-body space-y-4">
         <div className="flex flex-wrap gap-2">
           {status !== 'void' && (
-            <button type="button" className="btn btn-primary" disabled={busy} onClick={send}>
-              {status === 'draft' ? 'Send to customer' : 'Copy share link'}
-            </button>
+            <>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={busy}
+                onClick={() => send({ email: true })}
+              >
+                {status === 'draft' ? 'Email estimate' : 'Email link again'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={busy}
+                onClick={() => send()}
+              >
+                {status === 'draft' ? 'Copy link only' : 'Copy share link'}
+              </button>
+            </>
           )}
           {showConvert && (
             <button type="button" className="btn btn-secondary" disabled={busy} onClick={convert}>

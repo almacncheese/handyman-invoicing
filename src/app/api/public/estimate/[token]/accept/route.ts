@@ -90,6 +90,38 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       message: `Customer signed: ${body.signedName.trim()}`,
     });
 
+    // Notify workspace owners/staff (best-effort)
+    try {
+      const biz = await prisma.business.findUnique({
+        where: { id: quote.businessId },
+        include: {
+          users: {
+            where: { active: true },
+            select: { email: true, role: true },
+          },
+        },
+      });
+      if (biz) {
+        const { sendAcceptedNotifyEmail } = await import('@/lib/email');
+        const { appUrl } = await import('@/lib/config');
+        const recipients = biz.users
+          .filter((u) => u.role === 'owner' || u.role === 'staff')
+          .map((u) => u.email);
+        const notifyTo = biz.email || recipients[0];
+        if (notifyTo) {
+          await sendAcceptedNotifyEmail({
+            to: notifyTo,
+            businessName: biz.name,
+            estimateTitle: quote.title,
+            customerName: body.signedName.trim(),
+            quoteUrl: `${appUrl()}/quotes/${quote.id}`,
+          });
+        }
+      }
+    } catch {
+      // non-fatal
+    }
+
     return jsonOk({ already: false, status: 'accepted' });
   } catch (e) {
     if (e instanceof z.ZodError) {

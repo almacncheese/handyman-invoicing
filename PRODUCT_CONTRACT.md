@@ -31,6 +31,9 @@ Multi-tenant SaaS for handymen and field contractors: professional estimates on 
 | Print / PDF (browser) | Yes |
 | Invoice conversion + detail | Yes |
 | Manual payment records (cash/check/Zelle/etc.) | Yes |
+| Resend email (estimate, invite, password reset) | Yes |
+| Password reset | Yes |
+| Platform admin console | Yes |
 | Activity timeline | Yes |
 | Dashboard filters + metrics | Yes |
 | Branding, terms, payment handles (display only) | Yes |
@@ -51,11 +54,11 @@ Signup creates `plan=trial` + `trialEndsAt` (+14 days). Sending estimates is blo
 - QuickBooks / accounting sync  
 - Supplier catalog APIs  
 - Native mobile apps  
-- Automated email/SMS delivery (device `mailto:` / `sms:` only)  
+- SMS delivery (device `sms:` deep links still available)  
 
 ## Demo path
 
-1. Login `demo@handyquote.local` / `demo-demo-demo`  
+1. Login `demo@quickhandyquote.com` / `demo-demo-demo`  
 2. Settings + price list + customers  
 3. New estimate → send link → customer signs  
 4. Convert to invoice → record cash/Zelle when money arrives  

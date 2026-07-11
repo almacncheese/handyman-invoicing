@@ -51,7 +51,13 @@ export function TeamManager() {
       setName('');
       setEmail('');
       setPassword('');
-      setMsg(`Added ${data.user.email} as staff`);
+      if (data.email?.sent) {
+        setMsg(`Added ${data.user.email} — invite email sent`);
+      } else if (data.email?.reason === 'not_configured') {
+        setMsg(`Added ${data.user.email} — email not configured (share password manually)`);
+      } else {
+        setMsg(`Added ${data.user.email} as staff`);
+      }
       await load();
       router.refresh();
     } catch {
