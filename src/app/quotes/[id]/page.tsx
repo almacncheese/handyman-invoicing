@@ -9,7 +9,7 @@ import { formatUsd } from '@/lib/money';
 import { resolveBilling } from '@/lib/billing';
 import type { QuoteLineItem } from '@/lib/calculations';
 import { lineTotalCents } from '@/lib/calculations';
-import { normalizePhotos } from '@/lib/photos';
+import { normalizePhotos, photoSrc } from '@/lib/photos';
 import { appUrl } from '@/lib/config';
 
 type Props = { params: Promise<{ id: string }> };
@@ -103,7 +103,7 @@ export default async function QuoteDetailPage({ params }: Props) {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   key={p.id}
-                  src={p.dataUrl}
+                  src={photoSrc(p)}
                   alt=""
                   className="aspect-square w-full border border-[var(--border)] object-cover"
                 />

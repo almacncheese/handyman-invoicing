@@ -219,6 +219,48 @@ export function QuoteBuilder({
     setPhotos(next.slice(0, MAX_PHOTOS));
   }
 
+  async function persistPhotos(list: DraftPhoto[]): Promise<DraftPhoto[]> {
+    const out: DraftPhoto[] = [];
+    for (const p of list) {
+      // Already a remote URL — keep as-is
+      if (p.dataUrl.startsWith('http://') || p.dataUrl.startsWith('https://')) {
+        out.push(p);
+        continue;
+      }
+      if (!p.dataUrl.startsWith('data:image/')) {
+        out.push(p);
+        continue;
+      }
+      try {
+        const res = await fetch('/api/uploads/photo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            dataUrl: p.dataUrl,
+            id: p.id,
+            caption: p.caption,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          // Fall back to inline data URL if upload fails
+          out.push(p);
+          continue;
+        }
+        const url = data.photo?.url || p.dataUrl;
+        out.push({
+          id: data.photo?.id || p.id,
+          dataUrl: url,
+          caption: p.caption,
+          createdAt: data.photo?.createdAt || p.createdAt,
+        });
+      } catch {
+        out.push(p);
+      }
+    }
+    return out;
+  }
+
   async function save() {
     setSaving(true);
     setError(null);
@@ -254,6 +296,20 @@ export function QuoteBuilder({
       return;
     }
 
+    const storedPhotos = await persistPhotos(photos);
+    // Prefer url field for R2; keep dataUrl for inline fallback
+    const photoPayload = storedPhotos.map((p) => {
+      const isHttp = p.dataUrl.startsWith('http');
+      return {
+        id: p.id,
+        ...(isHttp
+          ? { url: p.dataUrl }
+          : { dataUrl: p.dataUrl, url: p.dataUrl }),
+        caption: p.caption,
+        createdAt: p.createdAt,
+      };
+    });
+
     const payload = {
       title: title.trim() || 'Estimate',
       jobType: jobType || null,
@@ -263,7 +319,7 @@ export function QuoteBuilder({
       taxPercent: parseFloat(taxPercent) || 0,
       depositPercent: parseFloat(depositPercent) || 0,
       lineItems,
-      photos,
+      photos: photoPayload,
     };
 
     try {

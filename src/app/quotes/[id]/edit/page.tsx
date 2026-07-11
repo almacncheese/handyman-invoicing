@@ -68,7 +68,7 @@ export default async function EditQuotePage({ params }: Props) {
 
   const photos: DraftPhoto[] = normalizePhotos(quote.photos).map((p) => ({
     id: p.id,
-    dataUrl: p.dataUrl,
+    dataUrl: p.url || p.dataUrl || '',
     caption: p.caption,
     createdAt: p.createdAt,
   }));

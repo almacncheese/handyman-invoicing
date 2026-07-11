@@ -6,6 +6,7 @@ import { BrandLogo } from './BrandLogo';
 import { AccountMenu } from './AccountMenu';
 import {
   IconCatalog,
+  IconChart,
   IconGear,
   IconInvoices,
   IconPeople,
@@ -17,6 +18,7 @@ const nav = [
   { href: '/invoices', label: 'Invoices', icon: IconInvoices },
   { href: '/customers', label: 'Customers', icon: IconPeople },
   { href: '/catalog', label: 'Price list', icon: IconCatalog },
+  { href: '/reports', label: 'Reports', icon: IconChart },
   { href: '/settings', label: 'Settings', icon: IconGear },
 ];
 

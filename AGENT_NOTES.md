@@ -77,7 +77,7 @@ Verified 2026-07-10: `npm test` 24/24 · `npm run build` green · API smoke logi
 ## Active known issues
 
 - **Card payments disabled** (`/api/payments/charge` + public pay → 501). Manual cash/Zelle record only.
-- Photo storage is data-URL JSON (fine locally; move to R2/S3 at scale)
+- Photos: data-URL fallback OR Cloudflare R2 when `R2_*` env set (`src/lib/storage.ts`, `POST /api/uploads/photo`)
 - SaaS billing for HandyQuote Pro not wired (pricing is marketing)
 - Email/SMS is device deep links only (no Resend)
 - Rate limits are in-process (per container); fine for single Coolify replica
@@ -101,3 +101,22 @@ Verified 2026-07-10: `npm test` 24/24 · `npm run build` green · API smoke logi
 - Domain DNS: verify `quickhandyquote.com` in Resend (SPF/DKIM)
 - Sends: estimate to customer, staff invite, password reset, signed notify to business
 - Without key: actions still work (link copy); email returns `sent: false`
+
+## Photo object storage (R2)
+
+1. Cloudflare dashboard → R2 → Create bucket e.g. `handyquote-photos`
+2. Enable public access (custom domain or R2.dev public URL)
+3. Manage R2 API Tokens → create S3-compatible token with Object Read & Write
+4. Coolify env on handyquote app:
+   - `R2_ACCOUNT_ID`
+   - `R2_ACCESS_KEY_ID`
+   - `R2_SECRET_ACCESS_KEY`
+   - `R2_BUCKET_NAME`
+   - `R2_PUBLIC_URL` (no trailing slash)
+5. Redeploy. `GET /api/uploads/photo` returns `{ configured: true, storage: "r2" }`
+6. Without env: photos still save as inline data URLs (works, DB-heavy)
+
+## Reports
+
+- UI: `/reports` (nav + Account menu)
+- API: `GET /api/reports/summary`

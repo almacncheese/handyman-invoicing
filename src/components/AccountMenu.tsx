@@ -84,6 +84,14 @@ export function AccountMenu({ inverted = false }: { inverted?: boolean }) {
           >
             Plan &amp; trial
           </Link>
+          <Link
+            href="/reports"
+            role="menuitem"
+            className="block px-3 py-2 text-sm text-[var(--ink)] hover:bg-[var(--surface-2)]"
+            onClick={() => setOpen(false)}
+          >
+            Reports
+          </Link>
           {platformAdmin && (
             <Link
               href="/admin"

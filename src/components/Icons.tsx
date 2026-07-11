@@ -46,3 +46,12 @@ export function IconGear({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function IconChart({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4 19V5M4 19h16" />
+      <path d="M8 16V10M12 16V7M16 16v-4" />
+    </svg>
+  );
+}

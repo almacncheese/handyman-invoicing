@@ -19,7 +19,7 @@ type Estimate = {
     amountCents?: number;
     qty?: number;
   }>;
-  photos?: Array<{ id: string; dataUrl: string; caption?: string }>;
+  photos?: Array<{ id: string; dataUrl?: string; url?: string; caption?: string }>;
   subtotalCents: number;
   taxCents: number;
   totalCents: number;
@@ -222,7 +222,7 @@ export function PublicEstimate({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 key={p.id}
-                src={p.dataUrl}
+                src={p.url || p.dataUrl || ''}
                 alt={p.caption || 'Job photo'}
                 className="aspect-[4/3] w-full rounded-md border border-[var(--border)] object-cover"
               />

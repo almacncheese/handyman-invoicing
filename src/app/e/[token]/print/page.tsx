@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 import { isValidPublicToken } from '@/lib/authz';
 import { formatUsd } from '@/lib/money';
 import { lineTotalCents, type QuoteLineItem } from '@/lib/calculations';
-import { normalizePhotos } from '@/lib/photos';
+import { normalizePhotos, photoSrc } from '@/lib/photos';
 import { PrintButton } from '@/components/PrintButton';
 
 type Props = { params: Promise<{ token: string }> };
@@ -47,7 +47,7 @@ export default async function PrintEstimatePage({ params }: Props) {
             // eslint-disable-next-line @next/next/no-img-element
             <img
               key={p.id}
-              src={p.dataUrl}
+              src={photoSrc(p)}
               alt=""
               className="aspect-video w-full border-2 border-[var(--ink)] object-cover"
             />
