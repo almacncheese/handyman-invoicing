@@ -45,20 +45,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Keep root layout minimal — custom <head>/inline scripts here have broken
+  // Docker/prod prerender of Next's /_global-error (useContext null) on Next 16.
   return (
     <html lang="en">
-      <head>
-        {/* Bust stale caches + kill service workers that pin old CSS */}
-        <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-      </head>
-      <body className={`${body.variable} ${mono.variable} ${body.className}`}>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(x){x.unregister()})});}if(window.caches){caches.keys().then(function(k){k.forEach(function(n){caches.delete(n)})});}}catch(e){}})();`,
-          }}
-        />
-        {children}
-      </body>
+      <body className={`${body.variable} ${mono.variable} ${body.className}`}>{children}</body>
     </html>
   );
 }
