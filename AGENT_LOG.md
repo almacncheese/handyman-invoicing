@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-07-11 — LIVE: quickhandyquote.com
+
+**Did:** DNS A→VPS via Hostinger API; Coolify app `handyquote` + `handyquote-db` Postgres; fixed Docker builds (devDeps + webpack + minimal layout); deploy green; nginx vhost + Let’s Encrypt; public `/api/health` 200.
+**Found:** Coolify injects env as build ARGs — NODE_ENV=production at build broke npm ci; Turbopack + custom layout head broke `/_global-error` prerender. Auth secret rotated after first build leaked ARGs into logs.
+**Status:** **https://quickhandyquote.com live.** Mock payments only. Demo seed attempted post-deploy.
+
+---
+
 ## 2026-07-11 — Domain: quickhandyquote.com
 
 **Did:** Locked production domain decision — `quickhandyquote.com` owned at Hostinger. Updated DEPLOY.md (DNS A/www, Coolify env incl. APP_URL, health/migrate), AGENT_NOTES, PRODUCT_CONTRACT, README, .env.example, metadataBase.

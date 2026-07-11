@@ -8,8 +8,8 @@
 
 Repo: `almacncheese/handyman-invoicing`  
 Local path: `~/dev/handyman-invoicing`  
-**Production domain:** `https://quickhandyquote.com` (owned at Hostinger registrar; Coolify/VPS — deploy gated on Al)  
-Full DNS + Coolify steps: `DEPLOY.md`
+**Production domain:** `https://quickhandyquote.com` — **LIVE** on Hostinger VPS (Coolify app `handyquote` → nginx :3004 → LE cert)  
+Full runbook: `DEPLOY.md`
 
 Sister product (single-tenant PHP proof): `~/dev/aim-estimator` (AIM Fencing & Roofing). Do not break AIM deploy; this is a different product.
 

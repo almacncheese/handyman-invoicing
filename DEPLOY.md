@@ -3,7 +3,7 @@
 **Domain (owned):** `quickhandyquote.com` — Hostinger registrar  
 **Hosting target:** Coolify on Hostinger VPS (`72.62.169.186` pattern)  
 **Repo:** `almacncheese/handyman-invoicing` (private)  
-**Status:** Domain chosen · **prod deploy gated on Al’s explicit go**
+**Status:** **LIVE** (2026-07-11) — Coolify app `handyquote` + nginx + Let’s Encrypt
 
 ## Canonical URLs
 
@@ -32,24 +32,37 @@ Point the domain at the VPS / Coolify proxy (not “Hostinger Website Builder”
 4. After Coolify issues certs: confirm HTTPS on apex + www redirect.
 5. **Do not** publish the app container port on eth0; only the proxy (80/443). Portfolio lesson: published app ports bypass Cloudflare/nginx limits.
 
-## Coolify
+## Live topology (2026-07-11)
 
-1. New resource → **Dockerfile** from this repo (`main`).
-2. Domain: `quickhandyquote.com` (+ `www` if Coolify supports multi-host).
-3. Env (from `.env.example` — **real values**, never commit):
+| Piece | Detail |
+|-------|--------|
+| Coolify app | name `handyquote`, uuid `hq4432089401570550b16a6d` |
+| Container port map | host **3004** → container 3000 |
+| Postgres | Docker `handyquote-db` on `coolify` network (not Coolify UI DB) |
+| Edge | **nginx** `/etc/nginx/sites-enabled/quickhandyquote` → `127.0.0.1:3004` |
+| TLS | Let’s Encrypt `quickhandyquote.com` (+ www), certbot auto-renew |
+| Health | `https://quickhandyquote.com/api/health` |
+| Start | `scripts/docker-start.sh` → `prisma migrate deploy` then `next start` |
+
+**Redeploy:** push `main` (auto-deploy on) or Coolify force rebuild / tinker `queue_application_deployment`.
+
+### Coolify env (runtime-only — do **not** mark secrets as build-time)
 
 | Var | Prod value |
 |-----|------------|
-| `NODE_ENV` | `production` |
+| `NODE_ENV` | `production` (runtime only) |
 | `APP_URL` | `https://quickhandyquote.com` |
 | `AUTH_SECRET` | long random (fail-closed if missing) |
-| `DATABASE_URL` | Coolify Postgres URL for this app |
-| `PAYMENTS_MODE` | `mock` until card pay is green-lit (`ALLOW_MOCK_PAYMENTS=true` if using mock in prod) |
+| `DATABASE_URL` | `postgresql://handyquote:***@handyquote-db:5432/handyquote?schema=public` |
+| `PAYMENTS_MODE` | `mock` |
+| `ALLOW_MOCK_PAYMENTS` | `true` until card pay is green-lit |
 
-4. Health check: **`/api/health`**
-5. Release command / start: app already `next start`; ensure migrate runs once per deploy:
-   - `npx prisma migrate deploy` (before or as entry step)
-6. Resource limits + `restart: on-failure:5` (portfolio Docker lesson).
+Secrets live in Coolify’s encrypted env store. Emergency copies: root-only files on VPS `/root/.handyquote-*.secret` (not in git).
+
+### Build gotchas already fixed
+
+- `NODE_ENV=production` as **build-time** env → `npm ci` skips devDeps → missing `@tailwindcss/postcss`. Keep build-time flags off for NODE_ENV/secrets; Dockerfile forces `npm ci --include=dev`.
+- Turbopack Docker prerender of `/_global-error` failed with custom layout head/script → use `next build --webpack` + minimal root layout.
 
 ## Pre-flight (before first go-live)
 
