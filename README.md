@@ -1,44 +1,58 @@
-# HandyQuote / Handyman Invoicing SaaS
+# HandyQuote
 
-**SaaS tool for handymen and contractors to build quotes fast: automate material costs + margins + labor/time, edit quotes, convert to invoices, accept payments via Authorize.net.**
+**Estimates, e-signature, and invoices for field contractors** — multi-tenant SaaS.
 
-## Features (MVP)
-- Smart quote builder with line items (materials, labor, flat fees)
-- Margin and labor calculators
-- Editable quotes → Invoices
-- Customer approval, e-sign, shareable links
-- Custom branding (logo per business)
-- Authorize.net payments
-- QuickBooks sync (planned)
-- Sales tax handling
+Live **card payments are intentionally not in this build**. Contractors send professional estimates, customers sign on their phone, and any money received is recorded manually (cash / check / Zelle / Cash App / Venmo).
 
-## 5-Minute Local Setup
+## Local setup
 
-1. Clone the repo
-2. `cp .env.example .env`
-3. `docker compose up -d` (starts Postgres)
-4. `npm install`
-5. `npm run db:migrate`
-6. `npm run dev`
+```bash
+cp .env.example .env
+# Postgres on DATABASE_URL (docker compose up -d postgres, or local Postgres)
+npm install
+npx prisma db push
+npm run db:seed
+npm run dev
+```
 
 Open http://localhost:3000
 
+### Demo accounts
+
+| Role  | Email | Password |
+|-------|-------|----------|
+| Owner | `demo@handyquote.local` | `demo-demo-demo` |
+| Staff | `staff@handyquote.local` | `demo-demo-demo` |
+
+## What you get
+
+- Multi-tenant workspaces + staff invite  
+- Customers with history  
+- Price list (saved materials / labor / fees)  
+- Estimate builder: margin, labor hours, photos, job type  
+- Public customer link: e-sign, decline, print/PDF  
+- Share: copy, SMS, email deep links  
+- Convert to invoice; manual deposit tracking  
+- Activity timeline, dashboard filters, metrics  
+- Business branding + terms  
+
 ## Scripts
-- `npm run dev` - Development
-- `npm run build` - Build for production
-- `npm run start` - Start production
-- `npm run lint` - Lint
-- `npm test` - Test
-- `npm run db:migrate` - Prisma migrate
-- `npm run db:seed` - Seed DB
 
-## Deploy
-See DEPLOY.md for Coolify/Docker instructions.
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Dev server |
+| `npm test` | Vitest unit tests |
+| `npm run build` | Production build |
+| `npm run db:seed` | Demo data |
+| `bash scripts/smoke.sh` | API smoke (no card charges) |
 
-## Stack
-- Next.js 15 App Router + TypeScript
-- Tailwind + shadcn/ui
-- Prisma + PostgreSQL
-- Authorize.net integration
+## Docs
 
-Contribute: See issues and PRs.
+- `PRODUCT_CONTRACT.md` — scope  
+- `DECISIONS.md` — architecture choices  
+- `AGENT_NOTES.md` — agent memory  
+- `DEPLOY.md` — Coolify later  
+
+## Deploy later
+
+Domain + Coolify on Hostinger when ready. Set real `AUTH_SECRET` and `DATABASE_URL`. Card payments can plug into the existing payment-record model later.
