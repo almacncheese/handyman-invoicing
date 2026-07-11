@@ -5,6 +5,8 @@ import { prisma } from '@/lib/db';
 import { AppShell } from '@/components/AppShell';
 import { SettingsForm } from '@/components/SettingsForm';
 import { TeamManager } from '@/components/TeamManager';
+import { ChangePasswordForm } from '@/components/ChangePasswordForm';
+import Link from 'next/link';
 
 export default async function SettingsPage() {
   const session = await getSession();
@@ -52,6 +54,28 @@ export default async function SettingsPage() {
           venmoHandle: business.venmoHandle || '',
         }}
       />
+      <div className="mt-10">
+        <div className="page-header !mb-4">
+          <div>
+            <p className="page-kicker">Account</p>
+            <h2 className="page-title">Security</h2>
+            <p className="page-sub">
+              Signed in as <strong className="font-medium text-[var(--ink)]">{session.email}</strong>
+              {session.platformAdmin ? (
+                <>
+                  {' '}
+                  ·{' '}
+                  <Link href="/admin" className="text-[var(--pine)] underline underline-offset-2">
+                    Platform admin
+                  </Link>
+                </>
+              ) : null}
+            </p>
+          </div>
+        </div>
+        <ChangePasswordForm />
+      </div>
+
       <div className="mt-10">
         <div className="page-header !mb-4">
           <div>

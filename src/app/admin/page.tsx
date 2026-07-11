@@ -21,6 +21,12 @@ export default async function AdminPage() {
           <div className="flex items-center gap-3 text-sm">
             <span className="hidden text-white/60 sm:inline">{session.email}</span>
             <Link
+              href="/settings"
+              className="btn btn-secondary !border-white/25 !bg-transparent !text-white hover:!bg-white/10 btn-sm"
+            >
+              Change password
+            </Link>
+            <Link
               href="/dashboard"
               className="btn btn-secondary !border-white/25 !bg-transparent !text-white hover:!bg-white/10 btn-sm"
             >
