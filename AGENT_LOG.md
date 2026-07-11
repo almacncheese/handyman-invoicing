@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-07-11 — Resend email + password reset (payments deferred)
+
+**Did:** Resend integration (estimate, staff invite, password reset, signed notify). Forgot/reset pages. Email estimate button. /billing plan page without checkout. RESEND_API_KEY + FROM set in Coolify (runtime). Password-reset columns on prod DB.
+**Found:** Resend key was in macOS Keychain as `resend_api_key`. From address defaults to Resend onboarding until domain verified.
+**Status:** Code pushed `e9af34c`; redeploy queued. Al should verify `quickhandyquote.com` in Resend for custom from-address. **Payments still last.**
+
+---
+
 ## 2026-07-11 — Launch audit: harden + fix + optimize
 
 **Did:** Full audit. Fixed: login inactive users, demo credentials copy, auth rate limits, payment record race (re-read in tx), public view stamp race, middleware UX gate, health checks DB, security headers, seed self-contained + non-wipe prod, smoke for prod demo email. Tests green; deploy pending.
