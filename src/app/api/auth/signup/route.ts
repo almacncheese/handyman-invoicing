@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { createSessionToken, setSessionCookie } from '@/lib/session';
 import { slugify } from '@/lib/tokens';
 import { jsonError, jsonOk, errorFromException } from '@/lib/http';
+import { clientIp, rateLimit } from '@/lib/rate-limit';
 
 const schema = z.object({
   businessName: z.string().min(2).max(120),
@@ -15,6 +16,14 @@ const schema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = clientIp(req);
+    const limited = rateLimit({ key: `signup:${ip}`, limit: 8, windowMs: 60 * 60_000 });
+    if (!limited.ok) {
+      return jsonError('Too many signups from this network — try again later', 429, {
+        retryAfterSec: limited.retryAfterSec,
+      });
+    }
+
     const body = schema.parse(await req.json());
     const email = body.email.toLowerCase().trim();
 

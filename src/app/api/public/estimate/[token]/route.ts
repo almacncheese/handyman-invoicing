@@ -24,25 +24,30 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
       return jsonError('Not found', 404);
     }
 
-    // Stamp viewed once (forward-only from sent)
+    // Stamp viewed once (conditional — race-safe)
     let status = quote.status;
     if (!quote.viewedAt && quote.status === 'sent') {
-      await prisma.quote.update({
-        where: { id: quote.id },
+      const stamped = await prisma.quote.updateMany({
+        where: { id: quote.id, status: 'sent', viewedAt: null },
         data: {
           viewedAt: new Date(),
           status: 'viewed',
         },
       });
-      status = 'viewed';
-      const { logActivity } = await import('@/lib/activity');
-      await logActivity({
-        businessId: quote.businessId,
-        quoteId: quote.id,
-        actorType: 'customer',
-        action: 'viewed',
-        message: 'Customer opened the estimate link',
-      });
+      if (stamped.count > 0) {
+        status = 'viewed';
+        const { logActivity } = await import('@/lib/activity');
+        await logActivity({
+          businessId: quote.businessId,
+          quoteId: quote.id,
+          actorType: 'customer',
+          action: 'viewed',
+          message: 'Customer opened the estimate link',
+        });
+      } else {
+        const fresh = await prisma.quote.findUnique({ where: { id: quote.id } });
+        status = fresh?.status || status;
+      }
     }
 
     return jsonOk({

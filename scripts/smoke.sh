@@ -12,11 +12,20 @@ json_field() {
 echo "== health =="
 curl -sS "$BASE/api/health" | grep -q '"ok":true'
 
-echo "== login =="
-curl -sS -c "$COOKIE" -b "$COOKIE" -X POST "$BASE/api/auth/login" \
+DEMO_EMAIL="${DEMO_EMAIL:-demo@quickhandyquote.com}"
+
+echo "== login ($DEMO_EMAIL) =="
+LOGIN_BODY=$(curl -sS -c "$COOKIE" -b "$COOKIE" -X POST "$BASE/api/auth/login" \
   -H 'Content-Type: application/json' \
-  -d '{"email":"demo@handyquote.local","password":"demo-demo-demo"}' \
-  | grep -q demo@handyquote.local
+  -d "{\"email\":\"$DEMO_EMAIL\",\"password\":\"demo-demo-demo\"}")
+if ! echo "$LOGIN_BODY" | grep -q '"email"'; then
+  DEMO_EMAIL="demo@handyquote.local"
+  echo "  retry with $DEMO_EMAIL"
+  LOGIN_BODY=$(curl -sS -c "$COOKIE" -b "$COOKIE" -X POST "$BASE/api/auth/login" \
+    -H 'Content-Type: application/json' \
+    -d "{\"email\":\"$DEMO_EMAIL\",\"password\":\"demo-demo-demo\"}")
+fi
+echo "$LOGIN_BODY" | grep -q "$DEMO_EMAIL"
 
 echo "== create quote =="
 Q=$(curl -sS -c "$COOKIE" -b "$COOKIE" -X POST "$BASE/api/quotes" \

@@ -41,7 +41,13 @@ export function AuthForm({ mode }: { mode: Mode }) {
         setError(data.error || 'Request failed');
         return;
       }
-      router.push('/dashboard');
+      const next =
+        typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search).get('next')
+          : null;
+      const dest =
+        next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
+      router.push(dest);
       router.refresh();
     } catch {
       setError('Network error — try again');

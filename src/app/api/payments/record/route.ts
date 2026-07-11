@@ -40,19 +40,26 @@ export async function POST(req: NextRequest) {
       return jsonOk({ payment: existing, replayed: true });
     }
 
-    if (body.amountCents > invoice!.amountDueCents + 1) {
-      // allow $0.01 rounding slack
-      return jsonError(
-        `Amount exceeds balance due (${invoice!.amountDueCents} cents)`,
-        422,
-      );
-    }
-
     const payment = await prisma.$transaction(async (tx) => {
+      // Re-read under transaction to avoid concurrent double-pay overbalance
+      const fresh = await tx.invoice.findUnique({ where: { id: invoice!.id } });
+      if (!fresh || fresh.businessId !== session.businessId) {
+        throw Object.assign(new Error('Not found'), { status: 404 });
+      }
+      if (fresh.status === 'void') {
+        throw Object.assign(new Error('Invoice is void'), { status: 409 });
+      }
+      if (body.amountCents > fresh.amountDueCents + 1) {
+        throw Object.assign(
+          new Error(`Amount exceeds balance due (${fresh.amountDueCents} cents)`),
+          { status: 422 },
+        );
+      }
+
       const p = await tx.payment.create({
         data: {
           businessId: session.businessId,
-          invoiceId: invoice!.id,
+          invoiceId: fresh.id,
           amountCents: body.amountCents,
           status: 'succeeded',
           method: body.method,
@@ -64,19 +71,19 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      const newPaid = invoice!.amountPaidCents + body.amountCents;
-      const fullyPaid = newPaid >= invoice!.totalCents;
+      const newPaid = fresh.amountPaidCents + body.amountCents;
+      const fullyPaid = newPaid >= fresh.totalCents;
       await tx.invoice.update({
-        where: { id: invoice!.id },
+        where: { id: fresh.id },
         data: {
           amountPaidCents: newPaid,
-          amountDueCents: Math.max(0, invoice!.totalCents - newPaid),
+          amountDueCents: Math.max(0, fresh.totalCents - newPaid),
           status: fullyPaid ? 'paid' : 'partial',
         },
       });
       if (fullyPaid) {
         await tx.quote.update({
-          where: { id: invoice!.quoteId },
+          where: { id: fresh.quoteId },
           data: { status: 'paid' },
         });
       }

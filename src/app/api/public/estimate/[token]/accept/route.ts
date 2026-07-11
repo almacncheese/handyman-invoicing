@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db';
 import { isValidPublicToken } from '@/lib/authz';
 import { logActivity } from '@/lib/activity';
 import { jsonError, jsonOk, errorFromException } from '@/lib/http';
+import { clientIp, rateLimit } from '@/lib/rate-limit';
 
 const schema = z.object({
   signedName: z.string().min(1).max(200),
@@ -14,6 +15,15 @@ type Ctx = { params: Promise<{ token: string }> };
 
 export async function POST(req: NextRequest, ctx: Ctx) {
   try {
+    const limited = rateLimit({
+      key: `accept:${clientIp(req)}`,
+      limit: 30,
+      windowMs: 15 * 60_000,
+    });
+    if (!limited.ok) {
+      return jsonError('Too many attempts — try again later', 429);
+    }
+
     const { token } = await ctx.params;
     if (!isValidPublicToken(token)) {
       return jsonError('Not found', 404);

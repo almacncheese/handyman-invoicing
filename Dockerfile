@@ -34,6 +34,8 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/next.config.ts ./next.config.ts
 COPY --from=builder /app/scripts/docker-start.sh ./scripts/docker-start.sh
+# tsx needed for optional prisma seed in container
+COPY --from=builder /app/node_modules/tsx ./node_modules/tsx
 RUN chmod +x ./scripts/docker-start.sh \
   && chown -R nextjs:nodejs /app
 

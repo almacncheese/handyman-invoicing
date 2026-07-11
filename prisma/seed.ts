@@ -1,28 +1,46 @@
+/**
+ * Demo seed — safe for local; on production prefer non-destructive first-run
+ * unless SEED_WIPE=1 is set.
+ */
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import { calculateQuoteTotal, type QuoteLineItem } from '../src/lib/calculations';
-import { generatePublicToken } from '../src/lib/tokens';
-import { formatQuoteNumber } from '../src/lib/quote-numbers';
+import {
+  calculateQuoteTotal,
+  formatQuoteNumber,
+  generatePublicToken,
+  type SeedLine,
+} from './seed-helpers';
 
 const prisma = new PrismaClient();
 
-async function main() {
-  const email = 'demo@handyquote.local';
-  const password = 'demo-demo-demo';
+const DEMO_EMAIL = process.env.SEED_DEMO_EMAIL || 'demo@quickhandyquote.com';
+const STAFF_EMAIL = process.env.SEED_STAFF_EMAIL || 'staff@quickhandyquote.com';
+const DEMO_PASSWORD = process.env.SEED_DEMO_PASSWORD || 'demo-demo-demo';
 
-  await prisma.activity.deleteMany();
-  await prisma.payment.deleteMany();
-  await prisma.invoice.deleteMany();
-  await prisma.quote.deleteMany();
-  await prisma.lineTemplate.deleteMany();
-  await prisma.customer.deleteMany();
-  await prisma.user.deleteMany();
-  await prisma.business.deleteMany();
+async function main() {
+  const wipe = process.env.SEED_WIPE === '1' || process.env.NODE_ENV !== 'production';
+
+  if (wipe) {
+    await prisma.activity.deleteMany();
+    await prisma.payment.deleteMany();
+    await prisma.invoice.deleteMany();
+    await prisma.quote.deleteMany();
+    await prisma.lineTemplate.deleteMany();
+    await prisma.customer.deleteMany();
+    await prisma.user.deleteMany();
+    await prisma.business.deleteMany();
+  } else {
+    const existing = await prisma.user.findFirst({ where: { email: DEMO_EMAIL } });
+    if (existing) {
+      console.log(`Demo user ${DEMO_EMAIL} already exists — skip (set SEED_WIPE=1 to reset)`);
+      return;
+    }
+  }
 
   const business = await prisma.business.create({
     data: {
       name: 'Demo Handyman Co',
-      slug: 'demo-handyman',
+      slug: wipe ? 'demo-handyman' : `demo-handyman-${Date.now().toString(36)}`,
       primaryColor: '#0f5c4c',
       phone: '(555) 010-2000',
       email: 'hello@demo-handyman.local',
@@ -42,23 +60,27 @@ async function main() {
     },
   });
 
+  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
+
   await prisma.user.create({
     data: {
       businessId: business.id,
-      email,
+      email: DEMO_EMAIL,
       name: 'Demo Owner',
-      passwordHash: await bcrypt.hash(password, 12),
+      passwordHash,
       role: 'owner',
+      active: true,
     },
   });
 
   await prisma.user.create({
     data: {
       businessId: business.id,
-      email: 'staff@handyquote.local',
+      email: STAFF_EMAIL,
       name: 'Field Staff',
-      passwordHash: await bcrypt.hash(password, 12),
+      passwordHash,
       role: 'staff',
+      active: true,
     },
   });
 
@@ -116,7 +138,7 @@ async function main() {
     ],
   });
 
-  const lines: QuoteLineItem[] = [
+  const lines: SeedLine[] = [
     {
       type: 'material',
       description: 'Deck boards & fasteners',
@@ -175,8 +197,7 @@ async function main() {
     },
   });
 
-  // Second estimate already sent
-  const lines2: QuoteLineItem[] = [
+  const lines2: SeedLine[] = [
     { type: 'labor', description: 'Ceiling fan install', hours: 2, rateCents: 7500 },
     { type: 'flat', description: 'Materials allowance', amountCents: 12000 },
   ];
@@ -206,10 +227,10 @@ async function main() {
     },
   });
 
-  console.log('Seeded HandyQuote demo workspace (no card payments)');
-  console.log(`  Owner: ${email} / ${password}`);
-  console.log(`  Staff: staff@handyquote.local / ${password}`);
-  console.log(`  Pipeline sample total: $${(totals.totalCents / 100).toFixed(2)}`);
+  console.log('Seeded HandyQuote demo workspace (manual payments only)');
+  console.log(`  Owner: ${DEMO_EMAIL} / ${DEMO_PASSWORD}`);
+  console.log(`  Staff: ${STAFF_EMAIL} / ${DEMO_PASSWORD}`);
+  console.log(`  Sample total: $${(totals.totalCents / 100).toFixed(2)}`);
 }
 
 main()

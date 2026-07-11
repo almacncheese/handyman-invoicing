@@ -80,3 +80,10 @@ Verified 2026-07-10: `npm test` 24/24 · `npm run build` green · API smoke logi
 - Photo storage is data-URL JSON (fine locally; move to R2/S3 at scale)
 - SaaS billing for HandyQuote Pro not wired (pricing is marketing)
 - Email/SMS is device deep links only (no Resend)
+- Rate limits are in-process (per container); fine for single Coolify replica
+
+## Demo (prod)
+
+- Owner: `demo@quickhandyquote.com` / `demo-demo-demo`
+- Smoke: `bash scripts/live-smoke.sh`
+- Seed (prod container, non-wipe if demo exists): `npx prisma db seed`

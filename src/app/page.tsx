@@ -58,7 +58,7 @@ export default async function HomePage() {
               </Link>
             </div>
             <p className="mkt-trust !text-white/45">
-              No card required · Demo after seed: demo@handyquote.local
+              No card required · Demo: demo@quickhandyquote.com
             </p>
           </div>
 

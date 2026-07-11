@@ -23,8 +23,10 @@ Open http://localhost:3000
 
 | Role  | Email | Password |
 |-------|-------|----------|
-| Owner | `demo@handyquote.local` | `demo-demo-demo` |
-| Staff | `staff@handyquote.local` | `demo-demo-demo` |
+| Owner | `demo@quickhandyquote.com` | `demo-demo-demo` |
+| Staff | `staff@quickhandyquote.com` | `demo-demo-demo` |
+
+Production: https://quickhandyquote.com — same demo after seed.
 
 ## What you get
 

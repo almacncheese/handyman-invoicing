@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-07-11 — Launch audit: harden + fix + optimize
+
+**Did:** Full audit. Fixed: login inactive users, demo credentials copy, auth rate limits, payment record race (re-read in tx), public view stamp race, middleware UX gate, health checks DB, security headers, seed self-contained + non-wipe prod, smoke for prod demo email. Tests green; deploy pending.
+**Found:** Init migration lagged schema (already pushed); seed couldn't run in Docker (src imports); card charge correctly 501.
+**Status:** Code ready to ship; verify with live-smoke after deploy.
+
+---
+
 ## 2026-07-11 — LIVE: quickhandyquote.com
 
 **Did:** DNS A→VPS via Hostinger API; Coolify app `handyquote` + `handyquote-db` Postgres; fixed Docker builds (devDeps + webpack + minimal layout); deploy green; nginx vhost + Let’s Encrypt; public `/api/health` 200.

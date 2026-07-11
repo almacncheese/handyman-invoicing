@@ -23,7 +23,7 @@ export default async function LoginPage({ searchParams }: Props) {
         )}
         <AuthForm mode="login" />
         <p className="mt-4 text-center text-xs text-[var(--muted)]">
-          Demo: demo@handyquote.local / demo-demo-demo
+          Demo: demo@quickhandyquote.com / demo-demo-demo
         </p>
       </div>
     </main>
