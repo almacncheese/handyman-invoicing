@@ -110,7 +110,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       )}
 
       <button className="btn btn-primary w-full" type="submit" disabled={loading}>
-        {loading ? 'Working…' : mode === 'signup' ? 'Create account' : 'Sign in'}
+        {loading ? 'Working…' : mode === 'signup' ? 'Start free trial' : 'Sign in'}
       </button>
 
       <p className="text-center text-base text-[var(--muted)]">
@@ -125,7 +125,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
           <>
             New here?{' '}
             <Link href="/signup" className="font-semibold text-[var(--pine)] underline underline-offset-2">
-              Create workspace
+              Start free trial
             </Link>
           </>
         )}

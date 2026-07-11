@@ -35,6 +35,7 @@ export default async function SettingsPage() {
         </div>
       </div>
       <SettingsForm
+        readOnly={session.role !== 'owner'}
         initial={{
           name: business.name,
           primaryColor: business.primaryColor,
@@ -70,6 +71,10 @@ export default async function SettingsPage() {
                   </Link>
                 </>
               ) : null}
+              {' · '}
+              <Link href="/billing" className="text-[var(--pine)] underline underline-offset-2">
+                Plan &amp; trial
+              </Link>
             </p>
           </div>
         </div>
@@ -83,7 +88,7 @@ export default async function SettingsPage() {
             <h2 className="page-title">Team</h2>
           </div>
         </div>
-        <TeamManager />
+        <TeamManager canInvite={session.role === 'owner'} />
       </div>
     </AppShell>
   );

@@ -22,17 +22,19 @@ export default async function PublicEstimatePage({ params }: Props) {
   if (!quote || quote.status === 'void') notFound();
 
   if (!quote.viewedAt && quote.status === 'sent') {
-    await prisma.quote.update({
-      where: { id: quote.id },
+    const stamped = await prisma.quote.updateMany({
+      where: { id: quote.id, status: 'sent', viewedAt: null },
       data: { viewedAt: new Date(), status: 'viewed' },
     });
-    await logActivity({
-      businessId: quote.businessId,
-      quoteId: quote.id,
-      actorType: 'customer',
-      action: 'viewed',
-      message: 'Customer opened the estimate link',
-    });
+    if (stamped.count > 0) {
+      await logActivity({
+        businessId: quote.businessId,
+        quoteId: quote.id,
+        actorType: 'customer',
+        action: 'viewed',
+        message: 'Customer opened the estimate link',
+      });
+    }
   }
 
   const paymentLinks = buildPaymentLinks(

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BrandLogo } from './BrandLogo';
-import { LogoutButton } from './LogoutButton';
+import { AccountMenu } from './AccountMenu';
 import {
   IconCatalog,
   IconGear,
@@ -45,7 +45,6 @@ export function AppShell({
 
   return (
     <div className="hq-shell hq-shell-v4">
-      {/* Full-width top app bar — replaces the old dark left rail */}
       <header className="hq-appbar">
         <div className="hq-appbar-inner">
           <div className="hq-appbar-brand">
@@ -71,24 +70,26 @@ export function AppShell({
 
           <div className="hq-appbar-right">
             {planLabel && (
-              <span
+              <Link
+                href="/billing"
                 className="hidden rounded-full px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-wide sm:inline-block"
                 style={{
                   background: trialExpired ? 'var(--warn-soft)' : 'var(--pine-soft)',
                   color: trialExpired ? 'var(--warn)' : 'var(--pine-deep)',
                 }}
+                title="Plan & trial"
               >
                 {planLabel}
-              </span>
+              </Link>
             )}
-            <div className="hq-workspace">
+            <div className="hq-workspace hidden min-[1100px]:block">
               <span className="hq-workspace-label">Workspace</span>
               <span className="hq-workspace-name">{businessName}</span>
             </div>
             <Link href="/quotes/new" className="btn btn-primary btn-sm hq-appbar-cta">
               New estimate
             </Link>
-            <LogoutButton />
+            <AccountMenu inverted />
           </div>
         </div>
       </header>
@@ -104,8 +105,10 @@ export function AppShell({
       )}
       {!trialExpired && trialDaysLeft != null && trialDaysLeft <= 5 && trialDaysLeft > 0 && (
         <div className="border-b border-[var(--line)] bg-[var(--pine-soft)] px-4 py-2 text-center text-sm text-[var(--pine-deep)]">
-          Trial: <strong>{trialDaysLeft} day{trialDaysLeft === 1 ? '' : 's'}</strong> left · then
-          Pro at $29/mo ·{' '}
+          Trial: <strong>
+            {trialDaysLeft} day{trialDaysLeft === 1 ? '' : 's'}
+          </strong>{' '}
+          left · then Pro at $29/mo ·{' '}
           <Link href="/billing" className="font-semibold underline underline-offset-2">
             Details
           </Link>

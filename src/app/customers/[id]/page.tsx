@@ -43,15 +43,23 @@ export default async function CustomerDetailPage({ params }: Props) {
       trialExpired={billing.isExpired}
       trialDaysLeft={billing.isTrial ? billing.trialDaysLeft : undefined}
     >
-      <div className="mb-4">
-        <Link href="/customers" className="text-sm font-medium text-[var(--accent)]">
-          ← Customers
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <Link href="/customers" className="text-sm font-medium text-[var(--accent)]">
+            ← Customers
+          </Link>
+          <h1 className="page-title mt-2">{customer.name}</h1>
+          <p className="page-sub">
+            {[customer.phone, customer.email, customer.address].filter(Boolean).join(' · ') ||
+              'No contact details yet'}
+          </p>
+        </div>
+        <Link
+          href={`/quotes/new?customerId=${customer.id}`}
+          className="btn btn-primary"
+        >
+          New estimate
         </Link>
-        <h1 className="page-title mt-2">{customer.name}</h1>
-        <p className="page-sub">
-          {[customer.phone, customer.email, customer.address].filter(Boolean).join(' · ') ||
-            'No contact details yet'}
-        </p>
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">

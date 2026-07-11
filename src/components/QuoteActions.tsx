@@ -47,21 +47,51 @@ export function QuoteActions({
     return data.invoice.id as string;
   }
 
-  async function send(opts?: { email?: boolean }) {
+  async function send(opts?: { email?: boolean; to?: string }) {
     await run(async () => {
       const res = await fetch(`/api/quotes/${quoteId}/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: opts?.email === true }),
+        body: JSON.stringify({
+          email: opts?.email === true,
+          ...(opts?.to ? { to: opts.to } : {}),
+        }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Send failed');
+      if (!res.ok) {
+        if (res.status === 402) {
+          throw new Error(
+            `${data.error || 'Trial ended'} — open Plan & trial in Account menu to upgrade.`,
+          );
+        }
+        throw new Error(data.error || 'Send failed');
+      }
       setShareUrl(data.shareUrl);
       if (opts?.email) {
         if (data.email?.sent) {
           setMsg('Estimate emailed to customer + link ready');
         } else if (data.email?.reason === 'no_recipient') {
-          setMsg('Link ready — add a customer email to send mail');
+          const to = window.prompt(
+            'No email on this customer. Enter an email address to send the estimate:',
+          );
+          if (to && to.includes('@')) {
+            // Retry with explicit recipient
+            const res2 = await fetch(`/api/quotes/${quoteId}/send`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: true, to: to.trim() }),
+            });
+            const data2 = await res2.json();
+            if (!res2.ok) throw new Error(data2.error || 'Send failed');
+            setShareUrl(data2.shareUrl);
+            setMsg(
+              data2.email?.sent
+                ? `Estimate emailed to ${to.trim()}`
+                : data2.email?.message || 'Link ready — email may have failed',
+            );
+          } else {
+            setMsg('Link ready — add a customer email in Customers to email next time');
+          }
         } else if (data.email?.reason === 'not_configured') {
           setMsg('Link ready — email not configured (RESEND_API_KEY)');
         } else {

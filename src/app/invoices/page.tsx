@@ -44,6 +44,9 @@ export default async function InvoicesPage() {
           <p className="mt-1 text-sm">
             Accept an estimate, then convert it or record a deposit from the estimate page.
           </p>
+          <Link href="/dashboard" className="btn btn-primary mt-4">
+            Go to estimates
+          </Link>
         </div>
       ) : (
         <div className="ledger">

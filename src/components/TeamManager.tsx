@@ -12,7 +12,7 @@ type Member = {
   createdAt: string;
 };
 
-export function TeamManager() {
+export function TeamManager({ canInvite = true }: { canInvite?: boolean }) {
   const router = useRouter();
   const [users, setUsers] = useState<Member[]>([]);
   const [name, setName] = useState('');
@@ -68,53 +68,65 @@ export function TeamManager() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
-      <form onSubmit={invite} className="panel h-fit">
-        <div className="panel-head">
-          <div>
-            <h2 className="panel-title">Invite staff</h2>
-            <p className="panel-sub">Staff can create and send estimates</p>
+    <div
+      className={
+        canInvite
+          ? 'grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]'
+          : 'grid gap-6'
+      }
+    >
+      {canInvite ? (
+        <form onSubmit={invite} className="panel h-fit">
+          <div className="panel-head">
+            <div>
+              <h2 className="panel-title">Invite staff</h2>
+              <p className="panel-sub">Staff can create and send estimates</p>
+            </div>
           </div>
-        </div>
-        <div className="panel-body space-y-3">
-          <div className="field">
-            <label>Name</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} required />
+          <div className="panel-body space-y-3">
+            <div className="field">
+              <label>Name</label>
+              <input value={name} onChange={(e) => setName(e.target.value)} required />
+            </div>
+            <div className="field">
+              <label>Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="field">
+              <label>Temporary password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={8}
+              />
+            </div>
+            {error && (
+              <p className="alert alert-error" role="alert">
+                {error}
+              </p>
+            )}
+            {msg && (
+              <p className="alert alert-success" role="status">
+                {msg}
+              </p>
+            )}
+            <button type="submit" className="btn btn-primary w-full" disabled={busy}>
+              {busy ? 'Adding…' : 'Add team member'}
+            </button>
           </div>
-          <div className="field">
-            <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="field">
-            <label>Temporary password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-            />
-          </div>
-          {error && (
-            <p className="alert alert-error" role="alert">
-              {error}
-            </p>
-          )}
-          {msg && (
-            <p className="alert alert-success" role="status">
-              {msg}
-            </p>
-          )}
-          <button type="submit" className="btn btn-primary w-full" disabled={busy}>
-            {busy ? 'Adding…' : 'Add team member'}
-          </button>
-        </div>
-      </form>
+        </form>
+      ) : (
+        <p className="text-sm text-[var(--muted)]">
+          Only workspace owners can invite staff.
+        </p>
+      )}
 
       <div className="panel">
         <div className="panel-head">

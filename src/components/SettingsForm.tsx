@@ -22,7 +22,14 @@ type Settings = {
   venmoHandle: string;
 };
 
-export function SettingsForm({ initial }: { initial: Settings }) {
+export function SettingsForm({
+  initial,
+  readOnly = false,
+}: {
+  initial: Settings;
+  /** Staff can view but not edit business settings */
+  readOnly?: boolean;
+}) {
   const router = useRouter();
   const [form, setForm] = useState(initial);
   const [msg, setMsg] = useState<string | null>(null);
@@ -30,11 +37,13 @@ export function SettingsForm({ initial }: { initial: Settings }) {
   const [busy, setBusy] = useState(false);
 
   function set<K extends keyof Settings>(key: K, value: Settings[K]) {
+    if (readOnly) return;
     setForm((f) => ({ ...f, [key]: value }));
   }
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    if (readOnly) return;
     setBusy(true);
     setError(null);
     setMsg(null);
@@ -77,6 +86,13 @@ export function SettingsForm({ initial }: { initial: Settings }) {
 
   return (
     <form onSubmit={save} className="space-y-4">
+      {readOnly && (
+        <div className="rounded-md border border-[var(--line)] bg-[var(--surface-2)] px-3 py-2 text-sm text-[var(--muted)]">
+          Only workspace owners can edit business settings. You can still change your password
+          below.
+        </div>
+      )}
+      <fieldset disabled={readOnly} className="space-y-4 border-0 p-0 m-0 min-w-0">
       <section className="panel">
         <div className="panel-head">
           <div>
@@ -246,9 +262,12 @@ export function SettingsForm({ initial }: { initial: Settings }) {
         </p>
       )}
 
-      <button type="submit" className="btn btn-primary" disabled={busy}>
-        {busy ? 'Saving…' : 'Save settings'}
-      </button>
+      {!readOnly && (
+        <button type="submit" className="btn btn-primary" disabled={busy}>
+          {busy ? 'Saving…' : 'Save settings'}
+        </button>
+      )}
+      </fieldset>
     </form>
   );
 }
