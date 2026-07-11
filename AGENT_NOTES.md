@@ -65,6 +65,16 @@ Verified 2026-07-10: `npm test` 24/24 · `npm run build` green · API smoke logi
 - Status machine: `src/lib/quote-status.ts` (forward-only)
 - Product docs: `PRODUCT_CONTRACT.md`, `ACCEPTANCE.md`, `DECISIONS.md`, `TEST_PLAN.md`
 
+## Secrets (don't lose them)
+
+- **Inventory (names only):** `scripts/secrets-inventory.md`
+- **Machine vault:** macOS Keychain (`resend_api_key`, `handyquote_auth_secret`, `handyquote_database_password`, `handyquote_platform_admin_password`, …)
+- **Prod source of truth:** Coolify env on app `handyquote`
+- **Pull prod → Keychain:** `bash scripts/secrets-pull-from-prod.sh`
+- **Local `.env` from Keychain:** `bash scripts/secrets-write-local-env.sh` (gitignored, mode 600)
+- **Set one Keychain value:** `bash scripts/secrets-set-keychain.sh <service> '<value>'`
+- Never put secret **values** in AGENT_NOTES / commits / chat
+
 ## Before you deploy
 
 1. Al's explicit go-ahead
@@ -73,13 +83,13 @@ Verified 2026-07-10: `npm test` 24/24 · `npm run build` green · API smoke logi
 4. **`APP_URL=https://quickhandyquote.com`** (share/sign links break if wrong)
 5. DNS A + www for `quickhandyquote.com` → VPS/Coolify (see `DEPLOY.md`)
 6. Card payments intentionally disabled until Al green-lights processor work
+7. Secrets runtime-only in Coolify (not build-time)
 
 ## Active known issues
 
 - **Card payments disabled** (`/api/payments/charge` + public pay → 501). Manual cash/Zelle record only.
 - Photos: data-URL fallback OR Cloudflare R2 when `R2_*` env set (`src/lib/storage.ts`, `POST /api/uploads/photo`)
 - SaaS billing for HandyQuote Pro not wired (pricing is marketing)
-- Email/SMS is device deep links only (no Resend)
 - Rate limits are in-process (per container); fine for single Coolify replica
 
 ## Demo (prod)
