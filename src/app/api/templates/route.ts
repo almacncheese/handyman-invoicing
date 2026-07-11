@@ -8,11 +8,16 @@ import { jsonError, jsonOk, errorFromException } from '@/lib/http';
 const createSchema = z.object({
   type: z.enum(['material', 'labor', 'flat']),
   description: z.string().min(1).max(300),
+  /** Dollars (UI) or omit if *Cents provided */
   cost: z.number().optional(),
-  marginPercent: z.number().optional(),
-  hours: z.number().optional(),
   rate: z.number().optional(),
   amount: z.number().optional(),
+  /** Integer cents (API / seed) — wins over dollar fields when set */
+  costCents: z.number().int().nonnegative().optional(),
+  rateCents: z.number().int().nonnegative().optional(),
+  amountCents: z.number().int().nonnegative().optional(),
+  marginPercent: z.number().optional(),
+  hours: z.number().optional(),
   qty: z.number().optional(),
 });
 
@@ -52,13 +57,14 @@ export async function POST(req: NextRequest) {
     };
 
     if (body.type === 'material') {
-      data.costCents = dollarsToCents(body.cost ?? 0);
+      data.costCents =
+        body.costCents ?? dollarsToCents(body.cost ?? 0);
       data.marginPercent = body.marginPercent ?? 25;
     } else if (body.type === 'labor') {
       data.hours = body.hours ?? 1;
-      data.rateCents = dollarsToCents(body.rate ?? 65);
+      data.rateCents = body.rateCents ?? dollarsToCents(body.rate ?? 65);
     } else {
-      data.amountCents = dollarsToCents(body.amount ?? 0);
+      data.amountCents = body.amountCents ?? dollarsToCents(body.amount ?? 0);
     }
 
     const template = await prisma.lineTemplate.create({ data });
