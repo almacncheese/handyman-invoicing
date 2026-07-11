@@ -1,0 +1,206 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Business {
+  id               String   @id @default(cuid())
+  name             String
+  slug             String   @unique
+  primaryColor     String   @default("#0f5c4c")
+  logoUrl          String?
+  phone            String?
+  email            String?
+  address          String?
+  website          String?
+  defaultTaxPct    Float    @default(0)
+  defaultDeposit   Float    @default(30)
+  defaultLaborRate Float    @default(65)
+  defaultMargin    Float    @default(25)
+  quotePrefix      String   @default("EST")
+  nextQuoteNumber  Int      @default(1)
+  termsText        String?  @db.Text
+  zelleHandle      String?
+  cashappCashtag   String?
+  venmoHandle      String?
+  plan             String   @default("trial") // trial | pro — SaaS billing later
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  users      User[]
+  customers  Customer[]
+  quotes     Quote[]
+  invoices   Invoice[]
+  payments   Payment[]
+  templates  LineTemplate[]
+  activities Activity[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  businessId   String
+  email        String
+  passwordHash String
+  name         String
+  role         String   @default("owner") // owner | staff
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, email])
+  @@index([email])
+}
+
+model Customer {
+  id         String   @id @default(cuid())
+  businessId String
+  name       String
+  email      String?
+  phone      String?
+  address    String?
+  notes      String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  quotes   Quote[]
+
+  @@index([businessId])
+  @@index([businessId, name])
+}
+
+model LineTemplate {
+  id            String   @id @default(cuid())
+  businessId    String
+  type          String // material | labor | flat
+  description   String
+  costCents     Int?
+  marginPercent Float?
+  hours         Float?
+  rateCents     Int?
+  amountCents   Int?
+  qty           Float?   @default(1)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+}
+
+model Quote {
+  id             String    @id @default(cuid())
+  businessId     String
+  customerId     String?
+  number         String?
+  title          String    @default("Estimate")
+  jobType        String? // general | plumbing | electrical | deck | paint | roofing | other
+  status         String    @default("draft") // draft|sent|viewed|accepted|declined|invoiced|paid|void
+  lineItems      Json
+  photos         Json      @default("[]")
+  taxPercent     Float     @default(0)
+  depositPercent Float     @default(30)
+  subtotalCents  Int       @default(0)
+  taxCents       Int       @default(0)
+  totalCents     Int       @default(0)
+  depositCents   Int       @default(0)
+  notes          String?   @db.Text
+  internalNotes  String?   @db.Text
+  jobAddress     String?
+  publicToken    String?   @unique
+  signatureData  String?   @db.Text
+  signedName     String?
+  declineReason  String?
+  validUntil     DateTime?
+  sentAt         DateTime?
+  viewedAt       DateTime?
+  acceptedAt     DateTime?
+  declinedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  business Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  invoice  Invoice?
+
+  @@unique([businessId, number])
+  @@index([businessId, status])
+  @@index([businessId, createdAt])
+  @@index([businessId, customerId])
+}
+
+model Invoice {
+  id              String    @id @default(cuid())
+  businessId      String
+  quoteId         String    @unique
+  number          String
+  status          String    @default("open") // open|partial|paid|void
+  lineItems       Json
+  subtotalCents   Int
+  taxCents        Int
+  totalCents      Int
+  depositCents    Int
+  amountDueCents  Int
+  amountPaidCents Int       @default(0)
+  dueAt           DateTime?
+  notes           String?   @db.Text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  business Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  quote    Quote     @relation(fields: [quoteId], references: [id], onDelete: Restrict)
+  payments Payment[]
+
+  @@unique([businessId, number])
+  @@index([businessId])
+  @@index([businessId, status])
+}
+
+/// Manual payment records only (cash/check/Zelle etc.) — no live card processor in this build
+model Payment {
+  id             String    @id @default(cuid())
+  businessId     String
+  invoiceId      String
+  amountCents    Int
+  currency       String    @default("USD")
+  status         String    @default("succeeded") // pending|succeeded|failed|void
+  method         String    @default("other") // cash | check | zelle | cashapp | venmo | other
+  idempotencyKey String    @unique
+  provider       String    @default("manual")
+  transactionId  String?
+  note           String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  processedAt    DateTime?
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  invoice  Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([invoiceId])
+}
+
+model Activity {
+  id         String   @id @default(cuid())
+  businessId String
+  quoteId    String?
+  invoiceId  String?
+  actorType  String // user | customer | system
+  actorName  String?
+  action     String // created|sent|viewed|accepted|declined|invoiced|payment_recorded|voided|updated
+  message    String
+  meta       Json?
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, createdAt])
+  @@index([businessId, quoteId])
+}
