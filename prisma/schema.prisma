@@ -30,6 +30,8 @@ model Business {
   plan             String    @default("trial") // trial | pro
   /// When trial access ends (null for pro / legacy). After this, send/share requires pro.
   trialEndsAt      DateTime?
+  /// Platform admin can override Pro list price (cents/month). null = default $29.
+  monthlyPriceCents Int?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
@@ -43,15 +45,17 @@ model Business {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  businessId   String
-  email        String
-  passwordHash String
-  name         String
-  role         String   @default("owner") // owner | staff
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String   @id @default(cuid())
+  businessId     String
+  email          String
+  passwordHash   String
+  name           String
+  role           String   @default("owner") // owner | staff
+  /// Cross-tenant platform operator (see all workspaces, price overrides)
+  platformAdmin  Boolean  @default(false)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 

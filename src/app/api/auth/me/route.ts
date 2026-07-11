@@ -18,6 +18,7 @@ export async function GET() {
       email: user.email,
       name: user.name,
       role: user.role,
+      platformAdmin: user.platformAdmin === true,
     },
     business: {
       id: user.business.id,
@@ -27,6 +28,8 @@ export async function GET() {
       logoUrl: user.business.logoUrl,
       defaultTaxPct: user.business.defaultTaxPct,
       defaultDeposit: user.business.defaultDeposit,
+      plan: user.business.plan,
+      monthlyPriceCents: user.business.monthlyPriceCents,
     },
   });
 }

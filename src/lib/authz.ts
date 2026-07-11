@@ -8,6 +8,8 @@ export type SessionUser = {
   businessId: string;
   role: 'owner' | 'staff';
   email: string;
+  /** Cross-tenant platform admin (Smith Web Co ops) */
+  platformAdmin: boolean;
 };
 
 export type OwnedResource = {
@@ -36,6 +38,21 @@ export function belongsToBusiness(
 ): boolean {
   if (!session || !resource) return false;
   return resource.businessId === session.businessId;
+}
+
+export function assertPlatformAdmin(
+  session: SessionUser | null | undefined,
+): asserts session is SessionUser {
+  if (!session) {
+    const err = new Error('Unauthorized');
+    (err as Error & { status: number }).status = 401;
+    throw err;
+  }
+  if (!session.platformAdmin) {
+    const err = new Error('Forbidden');
+    (err as Error & { status: number }).status = 403;
+    throw err;
+  }
 }
 
 /** Public token shape guard — run BEFORE any DB lookup. */

@@ -45,8 +45,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
         typeof window !== 'undefined'
           ? new URLSearchParams(window.location.search).get('next')
           : null;
-      const dest =
-        next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
+      let dest = '/dashboard';
+      if (next && next.startsWith('/') && !next.startsWith('//')) {
+        dest = next;
+      } else if (mode === 'login' && data.user?.platformAdmin) {
+        dest = '/admin';
+      }
       router.push(dest);
       router.refresh();
     } catch {

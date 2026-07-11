@@ -20,6 +20,10 @@ export type BillingSnapshot = {
   isTrial: boolean;
   isPro: boolean;
   isExpired: boolean;
+  /** Effective monthly price in cents (default or override) */
+  monthlyPriceCents: number;
+  /** True if platform admin set a custom price */
+  priceOverridden: boolean;
 };
 
 export function addTrialDays(from: Date = new Date(), days = TRIAL_DAYS): Date {
@@ -31,21 +35,30 @@ export function addTrialDays(from: Date = new Date(), days = TRIAL_DAYS): Date {
 export function resolveBilling(input: {
   plan: string;
   trialEndsAt: Date | null | undefined;
+  monthlyPriceCents?: number | null;
   now?: Date;
 }): BillingSnapshot {
   const now = input.now ?? new Date();
   const trialEndsAt = input.trialEndsAt ? new Date(input.trialEndsAt) : null;
+  const priceOverridden =
+    typeof input.monthlyPriceCents === 'number' && input.monthlyPriceCents >= 0;
+  const monthlyPriceCents = priceOverridden
+    ? input.monthlyPriceCents!
+    : PRO_PRICE_USD * 100;
+  const priceLabel = `$${(monthlyPriceCents / 100).toFixed(monthlyPriceCents % 100 === 0 ? 0 : 2)}/mo`;
 
   if (input.plan === 'pro') {
     return {
       plan: 'pro',
-      label: 'Pro',
+      label: priceOverridden ? `Pro · ${priceLabel}` : 'Pro',
       trialEndsAt,
       trialDaysLeft: 0,
       canUseProduct: true,
       isTrial: false,
       isPro: true,
       isExpired: false,
+      monthlyPriceCents,
+      priceOverridden,
     };
   }
 
@@ -62,6 +75,8 @@ export function resolveBilling(input: {
       isTrial: true,
       isPro: false,
       isExpired: false,
+      monthlyPriceCents,
+      priceOverridden,
     };
   }
 
@@ -77,6 +92,8 @@ export function resolveBilling(input: {
       isTrial: true,
       isPro: false,
       isExpired: false,
+      monthlyPriceCents,
+      priceOverridden,
     };
   }
 
@@ -89,5 +106,7 @@ export function resolveBilling(input: {
     isTrial: false,
     isPro: false,
     isExpired: true,
+    monthlyPriceCents,
+    priceOverridden,
   };
 }

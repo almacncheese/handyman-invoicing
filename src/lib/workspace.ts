@@ -62,6 +62,7 @@ export async function requireWorkspace(): Promise<Workspace> {
   const billing = resolveBilling({
     plan: user.business.plan,
     trialEndsAt: user.business.trialEndsAt,
+    monthlyPriceCents: user.business.monthlyPriceCents,
   });
 
   return {
@@ -70,6 +71,7 @@ export async function requireWorkspace(): Promise<Workspace> {
       businessId: user.businessId,
       email: user.email,
       role: user.role === 'staff' ? 'staff' : 'owner',
+      platformAdmin: user.platformAdmin === true,
     },
     business: user.business,
     user: {

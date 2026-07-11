@@ -17,6 +17,7 @@ export async function createSessionToken(user: SessionUser): Promise<string> {
     businessId: user.businessId,
     role: user.role,
     email: user.email,
+    platformAdmin: user.platformAdmin === true,
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -42,6 +43,7 @@ export async function verifySessionToken(
       businessId: payload.businessId,
       email: payload.email,
       role,
+      platformAdmin: payload.platformAdmin === true,
     };
   } catch {
     return null;
@@ -75,6 +77,7 @@ export async function getSession(): Promise<SessionUser | null> {
         businessId: true,
         email: true,
         role: true,
+        platformAdmin: true,
         business: { select: { id: true } },
       },
     });
@@ -89,6 +92,7 @@ export async function getSession(): Promise<SessionUser | null> {
       businessId: user.businessId,
       email: user.email,
       role: user.role === 'staff' ? 'staff' : 'owner',
+      platformAdmin: user.platformAdmin === true,
     };
   } catch {
     // DB blip — fail closed rather than forge session
@@ -131,6 +135,16 @@ export async function requireSession(): Promise<SessionUser> {
   if (!session) {
     const err = new Error('Unauthorized');
     (err as Error & { status: number }).status = 401;
+    throw err;
+  }
+  return session;
+}
+
+export async function requirePlatformAdmin(): Promise<SessionUser> {
+  const session = await requireSession();
+  if (!session.platformAdmin) {
+    const err = new Error('Forbidden');
+    (err as Error & { status: number }).status = 403;
     throw err;
   }
   return session;

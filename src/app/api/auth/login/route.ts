@@ -35,16 +35,24 @@ export async function POST(req: NextRequest) {
     }
 
     const role = user.role === 'staff' ? 'staff' : 'owner';
+    const platformAdmin = user.platformAdmin === true;
     const token = await createSessionToken({
       userId: user.id,
       businessId: user.businessId,
       email: user.email,
       role,
+      platformAdmin,
     });
     await setSessionCookie(token);
 
     return jsonOk({
-      user: { id: user.id, email: user.email, name: user.name, role },
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role,
+        platformAdmin,
+      },
       business: {
         id: user.business.id,
         name: user.business.name,

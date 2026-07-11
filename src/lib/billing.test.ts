@@ -8,6 +8,18 @@ describe('resolveBilling', () => {
     const b = resolveBilling({ plan: 'pro', trialEndsAt: null, now });
     expect(b.canUseProduct).toBe(true);
     expect(b.isPro).toBe(true);
+    expect(b.monthlyPriceCents).toBe(2900);
+  });
+
+  it('respects price override', () => {
+    const b = resolveBilling({
+      plan: 'pro',
+      trialEndsAt: null,
+      monthlyPriceCents: 1900,
+      now,
+    });
+    expect(b.priceOverridden).toBe(true);
+    expect(b.monthlyPriceCents).toBe(1900);
   });
 
   it('active trial can use product', () => {

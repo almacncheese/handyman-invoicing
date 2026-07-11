@@ -87,3 +87,10 @@ Verified 2026-07-10: `npm test` 24/24 · `npm run build` green · API smoke logi
 - Owner: `demo@quickhandyquote.com` / `demo-demo-demo`
 - Smoke: `bash scripts/live-smoke.sh`
 - Seed (prod container, non-wipe if demo exists): `npx prisma db seed`
+
+## Platform admin
+
+- UI: `/admin` (requires `User.platformAdmin`)
+- Ensure admin: `npx tsx scripts/ensure-platform-admin.ts`
+- Env overrides: `PLATFORM_ADMIN_EMAIL`, `PLATFORM_ADMIN_PASSWORD` (never commit real secrets)
+- Capabilities: list all workspaces/users, add user, set Pro/trial, override monthly price cents

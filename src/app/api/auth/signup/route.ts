@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
       businessId: result.business.id,
       email: result.user.email,
       role: 'owner',
+      platformAdmin: false,
     });
     await setSessionCookie(token);
 
@@ -76,6 +77,7 @@ export async function POST(req: NextRequest) {
         id: result.user.id,
         email: result.user.email,
         name: result.user.name,
+        platformAdmin: false,
       },
       business: {
         id: result.business.id,

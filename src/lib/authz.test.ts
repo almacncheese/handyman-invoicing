@@ -10,6 +10,7 @@ const session = {
   businessId: 'b1',
   role: 'owner' as const,
   email: 'a@b.com',
+  platformAdmin: false,
 };
 
 describe('authz', () => {
