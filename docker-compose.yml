@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16
+    image: postgres:16-alpine
     environment:
       POSTGRES_DB: handyman_invoicing
       POSTGRES_USER: postgres
@@ -9,15 +9,27 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d handyman_invoicing"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
+  # Optional full stack — local day-to-day uses `npm run dev` + postgres only
   app:
+    profiles: ["full"]
     build: .
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/handyman_invoicing?schema=public
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/handyman_invoicing?schema=public
+      AUTH_SECRET: local-compose-secret-change-me
+      APP_URL: http://localhost:3000
+      PAYMENTS_MODE: mock
+      NODE_ENV: production
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:
