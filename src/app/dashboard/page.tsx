@@ -7,6 +7,7 @@ import { AppShell } from '@/components/AppShell';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EstimateFilters } from '@/components/EstimateFilters';
 import { formatUsd } from '@/lib/money';
+import { resolveBilling } from '@/lib/billing';
 
 type Props = { searchParams: Promise<{ q?: string; status?: string }> };
 
@@ -67,8 +68,15 @@ export default async function DashboardPage({ searchParams }: Props) {
   const needsSetup =
     !business.phone || !business.termsText || customerCount === 0 || templateCount === 0;
 
+  const billing = resolveBilling(business);
+
   return (
-    <AppShell businessName={business.name}>
+    <AppShell
+      businessName={business.name}
+      planLabel={billing.label}
+      trialExpired={billing.isExpired}
+      trialDaysLeft={billing.isTrial ? billing.trialDaysLeft : undefined}
+    >
       <div className="page-header">
         <div>
           <p className="page-kicker">Pipeline</p>

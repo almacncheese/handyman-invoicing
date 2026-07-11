@@ -56,7 +56,9 @@ async function main() {
       venmoHandle: '@demohandy',
       termsText:
         'This estimate is valid for 30 days. A deposit may be requested to schedule work. Changes to scope may adjust the final price. Workmanship warranty: 1 year on labor unless otherwise noted.',
-      plan: 'trial',
+      // Demo workspace is Pro so demos never hit trial walls
+      plan: 'pro',
+      trialEndsAt: null,
     },
   });
 

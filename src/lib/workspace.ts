@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from './db';
 import type { SessionUser } from './authz';
 import { clearSessionCookie, getSession } from './session';
+import { resolveBilling, type BillingSnapshot } from './billing';
 
 export type Workspace = {
   session: SessionUser;
@@ -26,6 +27,7 @@ export type Workspace = {
     cashappCashtag: string | null;
     venmoHandle: string | null;
     plan: string;
+    trialEndsAt: Date | null;
   };
   user: {
     id: string;
@@ -34,6 +36,7 @@ export type Workspace = {
     role: string;
     active: boolean;
   };
+  billing: BillingSnapshot;
 };
 
 /**
@@ -56,6 +59,11 @@ export async function requireWorkspace(): Promise<Workspace> {
     redirect('/login?reason=session-expired');
   }
 
+  const billing = resolveBilling({
+    plan: user.business.plan,
+    trialEndsAt: user.business.trialEndsAt,
+  });
+
   return {
     session: {
       userId: user.id,
@@ -71,5 +79,6 @@ export async function requireWorkspace(): Promise<Workspace> {
       role: user.role,
       active: user.active,
     },
+    billing,
   };
 }

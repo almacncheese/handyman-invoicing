@@ -27,9 +27,11 @@ model Business {
   zelleHandle      String?
   cashappCashtag   String?
   venmoHandle      String?
-  plan             String   @default("trial") // trial | pro — SaaS billing later
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  plan             String    @default("trial") // trial | pro
+  /// When trial access ends (null for pro / legacy). After this, send/share requires pro.
+  trialEndsAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   users      User[]
   customers  Customer[]

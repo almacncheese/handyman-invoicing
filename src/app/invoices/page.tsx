@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { AppShell } from '@/components/AppShell';
 import { StatusBadge } from '@/components/StatusBadge';
 import { formatUsd } from '@/lib/money';
+import { resolveBilling } from '@/lib/billing';
 
 export default async function InvoicesPage() {
   const session = await getSession();
@@ -20,8 +21,15 @@ export default async function InvoicesPage() {
     }),
   ]);
 
+  const billing = resolveBilling(business);
+
   return (
-    <AppShell businessName={business.name}>
+    <AppShell
+      businessName={business.name}
+      planLabel={billing.label}
+      trialExpired={billing.isExpired}
+      trialDaysLeft={billing.isTrial ? billing.trialDaysLeft : undefined}
+    >
       <div className="page-header">
         <div>
           <p className="page-kicker">Billing</p>

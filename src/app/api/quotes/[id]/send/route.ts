@@ -6,6 +6,7 @@ import { generatePublicToken } from '@/lib/tokens';
 import { appUrl } from '@/lib/config';
 import { logActivity } from '@/lib/activity';
 import { jsonError, jsonOk, errorFromException } from '@/lib/http';
+import { resolveBilling } from '@/lib/billing';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -21,6 +22,19 @@ export async function POST(_req: NextRequest, ctx: Ctx) {
     const { id } = await ctx.params;
     const quote = await prisma.quote.findUnique({ where: { id } });
     assertSameBusiness(session, quote);
+
+    const business = await prisma.business.findUniqueOrThrow({
+      where: { id: session.businessId },
+      select: { plan: true, trialEndsAt: true },
+    });
+    const billing = resolveBilling(business);
+    if (!billing.canUseProduct) {
+      return jsonError(
+        'Your free trial has ended. Subscribe to Pro ($29/mo) to keep sending estimates.',
+        402,
+        { plan: billing.plan, code: 'trial_ended' },
+      );
+    }
 
     if (quote!.status === 'void') {
       return jsonError('Cannot share a voided estimate', 409);

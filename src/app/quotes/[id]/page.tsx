@@ -6,6 +6,7 @@ import { AppShell } from '@/components/AppShell';
 import { StatusBadge } from '@/components/StatusBadge';
 import { QuoteActions } from '@/components/QuoteActions';
 import { formatUsd } from '@/lib/money';
+import { resolveBilling } from '@/lib/billing';
 import type { QuoteLineItem } from '@/lib/calculations';
 import { lineTotalCents } from '@/lib/calculations';
 import { normalizePhotos } from '@/lib/photos';
@@ -40,8 +41,15 @@ export default async function QuoteDetailPage({ params }: Props) {
   const shareUrl = quote.publicToken ? `${appUrl()}/e/${quote.publicToken}` : null;
   const amountPaid = quote.invoice?.amountPaidCents || 0;
 
+  const billing = resolveBilling(quote.business);
+
   return (
-    <AppShell businessName={quote.business.name}>
+    <AppShell
+      businessName={quote.business.name}
+      planLabel={billing.label}
+      trialExpired={billing.isExpired}
+      trialDaysLeft={billing.isTrial ? billing.trialDaysLeft : undefined}
+    >
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2.5">

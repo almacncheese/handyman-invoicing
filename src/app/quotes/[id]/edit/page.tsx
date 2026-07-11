@@ -5,6 +5,7 @@ import { AppShell } from '@/components/AppShell';
 import { QuoteBuilder, type DraftLine, type DraftPhoto } from '@/components/QuoteBuilder';
 import type { QuoteLineItem } from '@/lib/calculations';
 import { centsToDollars } from '@/lib/money';
+import { resolveBilling } from '@/lib/billing';
 import { normalizePhotos } from '@/lib/photos';
 
 type Props = { params: Promise<{ id: string }> };
@@ -72,8 +73,15 @@ export default async function EditQuotePage({ params }: Props) {
     createdAt: p.createdAt,
   }));
 
+  const billing = resolveBilling(quote.business);
+
   return (
-    <AppShell businessName={quote.business.name}>
+    <AppShell
+      businessName={quote.business.name}
+      planLabel={billing.label}
+      trialExpired={billing.isExpired}
+      trialDaysLeft={billing.isTrial ? billing.trialDaysLeft : undefined}
+    >
       <p className="page-kicker">Edit</p>
       <h1 className="page-title mb-5">Edit estimate</h1>
       <QuoteBuilder

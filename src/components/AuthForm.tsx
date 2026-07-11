@@ -61,11 +61,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
       <div>
         <BrandLogo href={null} size={32} className="text-[0.95rem]" />
         <h1 className="mt-4 text-xl font-semibold tracking-tight text-[var(--ink)]">
-          {mode === 'signup' ? 'Create your workspace' : 'Sign in'}
+          {mode === 'signup' ? 'Start your free trial' : 'Sign in'}
         </h1>
         <p className="mt-1 text-sm text-[var(--muted)]">
           {mode === 'signup'
-            ? 'One business. Unlimited estimates.'
+            ? '14 days free, then $29/mo Pro. No free forever plan.'
             : 'Access your estimates and invoices.'}
         </p>
       </div>

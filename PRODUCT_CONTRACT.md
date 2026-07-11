@@ -35,10 +35,19 @@ Multi-tenant SaaS for handymen and field contractors: professional estimates on 
 | Dashboard filters + metrics | Yes |
 | Branding, terms, payment handles (display only) | Yes |
 
+## Pricing (product)
+
+| Plan | Price | Notes |
+|------|-------|--------|
+| **Trial** | $0 for **14 days** | Full product; then must upgrade |
+| **Pro** | **$29/mo** | Ongoing subscription — no free forever tier |
+
+Signup creates `plan=trial` + `trialEndsAt` (+14 days). Sending estimates is blocked after trial without Pro (HTTP 402). Card checkout for Pro is next; marketing must never promise free forever.
+
 ## Out of scope (this build)
 
-- **Live card payments** (Authorize.net / Stripe charge UI) — routes return 501  
-- SaaS subscription billing for HandyQuote itself  
+- **Live card payments** (Authorize.net / Stripe charge UI for deposits) — routes return 501  
+- **Stripe/subscription checkout UI** for HandyQuote Pro (enforcement + pricing live; payment collection next)  
 - QuickBooks / accounting sync  
 - Supplier catalog APIs  
 - Native mobile apps  

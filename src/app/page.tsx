@@ -27,7 +27,7 @@ export default async function HomePage() {
               Sign in
             </Link>
             <Link href="/signup" className="btn btn-primary">
-              Start free
+              Start trial
             </Link>
           </div>
         </div>
@@ -58,7 +58,7 @@ export default async function HomePage() {
               </Link>
             </div>
             <p className="mkt-trust !text-white/45">
-              No card required · Demo: demo@quickhandyquote.com
+              14-day free trial · Then $29/mo · Demo: demo@quickhandyquote.com
             </p>
           </div>
 
@@ -155,10 +155,10 @@ export default async function HomePage() {
         <div className="inner">
           <div>
             <h2>Ready when your next walkthrough is.</h2>
-            <p>Free while you set up. Upgrade when you host in production.</p>
+            <p>14-day free trial. Then Pro at $29/mo — no free forever plan.</p>
           </div>
           <Link href="/signup" className="btn btn-primary !px-6">
-            Create workspace
+            Start free trial
           </Link>
         </div>
       </section>

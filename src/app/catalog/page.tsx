@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db';
 import { AppShell } from '@/components/AppShell';
 import { CatalogManager } from '@/components/CatalogManager';
 import { formatUsd } from '@/lib/money';
+import { resolveBilling } from '@/lib/billing';
 
 export default async function CatalogPage() {
   const session = await getSession();
@@ -35,8 +36,15 @@ export default async function CatalogPage() {
           : `${t.description} · ${formatUsd(t.amountCents || 0)}`,
   }));
 
+  const billing = resolveBilling(business);
+
   return (
-    <AppShell businessName={business.name}>
+    <AppShell
+      businessName={business.name}
+      planLabel={billing.label}
+      trialExpired={billing.isExpired}
+      trialDaysLeft={billing.isTrial ? billing.trialDaysLeft : undefined}
+    >
       <div className="page-header">
         <div>
           <p className="page-kicker">Pricing</p>

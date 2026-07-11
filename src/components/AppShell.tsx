@@ -22,9 +22,16 @@ const nav = [
 
 export function AppShell({
   businessName,
+  planLabel,
+  trialExpired,
+  trialDaysLeft,
   children,
 }: {
   businessName: string;
+  /** e.g. "Trial · 12d left" or "Pro" */
+  planLabel?: string;
+  trialExpired?: boolean;
+  trialDaysLeft?: number;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -63,6 +70,17 @@ export function AppShell({
           </nav>
 
           <div className="hq-appbar-right">
+            {planLabel && (
+              <span
+                className="hidden rounded-full px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-wide sm:inline-block"
+                style={{
+                  background: trialExpired ? 'var(--warn-soft)' : 'var(--pine-soft)',
+                  color: trialExpired ? 'var(--warn)' : 'var(--pine-deep)',
+                }}
+              >
+                {planLabel}
+              </span>
+            )}
             <div className="hq-workspace">
               <span className="hq-workspace-label">Workspace</span>
               <span className="hq-workspace-name">{businessName}</span>
@@ -74,6 +92,22 @@ export function AppShell({
           </div>
         </div>
       </header>
+
+      {trialExpired && (
+        <div className="border-b border-[var(--warn)] bg-[var(--warn-soft)] px-4 py-2.5 text-center text-sm text-[var(--ink)]">
+          Your free trial has ended. Subscribe to <strong>Pro ($29/mo)</strong> to keep sending
+          estimates.{' '}
+          <Link href="/pricing" className="font-semibold underline underline-offset-2">
+            View pricing
+          </Link>
+        </div>
+      )}
+      {!trialExpired && trialDaysLeft != null && trialDaysLeft <= 5 && trialDaysLeft > 0 && (
+        <div className="border-b border-[var(--line)] bg-[var(--pine-soft)] px-4 py-2 text-center text-sm text-[var(--pine-deep)]">
+          Trial: <strong>{trialDaysLeft} day{trialDaysLeft === 1 ? '' : 's'}</strong> left · then
+          Pro at $29/mo
+        </div>
+      )}
 
       <main className="hq-main">
         <div className="hq-content">{children}</div>

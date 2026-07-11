@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
+import { resolveBilling } from '@/lib/billing';
 import { prisma } from '@/lib/db';
 import { AppShell } from '@/components/AppShell';
 import { SettingsForm } from '@/components/SettingsForm';
@@ -13,8 +14,15 @@ export default async function SettingsPage() {
     where: { id: session.businessId },
   });
 
+  const billing = resolveBilling(business);
+
   return (
-    <AppShell businessName={business.name}>
+    <AppShell
+      businessName={business.name}
+      planLabel={billing.label}
+      trialExpired={billing.isExpired}
+      trialDaysLeft={billing.isTrial ? billing.trialDaysLeft : undefined}
+    >
       <div className="page-header">
         <div>
           <p className="page-kicker">Workspace</p>

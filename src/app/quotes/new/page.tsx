@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
+import { resolveBilling } from '@/lib/billing';
 import { prisma } from '@/lib/db';
 import { AppShell } from '@/components/AppShell';
 import { QuoteBuilder } from '@/components/QuoteBuilder';
@@ -22,8 +23,15 @@ export default async function NewQuotePage({ searchParams }: Props) {
   const preselect =
     sp.customerId && customers.some((c) => c.id === sp.customerId) ? sp.customerId : '';
 
+  const billing = resolveBilling(business);
+
   return (
-    <AppShell businessName={business.name}>
+    <AppShell
+      businessName={business.name}
+      planLabel={billing.label}
+      trialExpired={billing.isExpired}
+      trialDaysLeft={billing.isTrial ? billing.trialDaysLeft : undefined}
+    >
       <div className="page-header">
         <div>
           <p className="page-kicker">Create</p>

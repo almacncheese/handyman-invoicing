@@ -6,6 +6,7 @@ import { AppShell } from '@/components/AppShell';
 import { StatusBadge } from '@/components/StatusBadge';
 import { CustomerEditForm } from '@/components/CustomerEditForm';
 import { formatUsd } from '@/lib/money';
+import { resolveBilling } from '@/lib/billing';
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -33,8 +34,15 @@ export default async function CustomerDetailPage({ params }: Props) {
     .filter((q) => ['draft', 'sent', 'viewed', 'accepted'].includes(q.status))
     .reduce((s, q) => s + q.totalCents, 0);
 
+  const billing = resolveBilling(business);
+
   return (
-    <AppShell businessName={business.name}>
+    <AppShell
+      businessName={business.name}
+      planLabel={billing.label}
+      trialExpired={billing.isExpired}
+      trialDaysLeft={billing.isTrial ? billing.trialDaysLeft : undefined}
+    >
       <div className="mb-4">
         <Link href="/customers" className="text-sm font-medium text-[var(--accent)]">
           ← Customers

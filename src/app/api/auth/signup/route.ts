@@ -6,6 +6,7 @@ import { createSessionToken, setSessionCookie } from '@/lib/session';
 import { slugify } from '@/lib/tokens';
 import { jsonError, jsonOk, errorFromException } from '@/lib/http';
 import { clientIp, rateLimit } from '@/lib/rate-limit';
+import { addTrialDays } from '@/lib/billing';
 
 const schema = z.object({
   businessName: z.string().min(2).max(120),
@@ -46,6 +47,8 @@ export async function POST(req: NextRequest) {
           name: body.businessName.trim(),
           slug,
           email,
+          plan: 'trial',
+          trialEndsAt: addTrialDays(new Date(), 14),
         },
       });
       const user = await tx.user.create({

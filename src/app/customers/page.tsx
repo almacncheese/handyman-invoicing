@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
+import { resolveBilling } from '@/lib/billing';
 import { prisma } from '@/lib/db';
 import { AppShell } from '@/components/AppShell';
 import { CustomerForm } from '@/components/CustomerForm';
@@ -17,8 +18,15 @@ export default async function CustomersPage() {
     }),
   ]);
 
+  const billing = resolveBilling(business);
+
   return (
-    <AppShell businessName={business.name}>
+    <AppShell
+      businessName={business.name}
+      planLabel={billing.label}
+      trialExpired={billing.isExpired}
+      trialDaysLeft={billing.isTrial ? billing.trialDaysLeft : undefined}
+    >
       <div className="page-header">
         <div>
           <p className="page-kicker">CRM</p>

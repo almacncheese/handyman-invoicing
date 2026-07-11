@@ -4,6 +4,7 @@ import { getSession } from '@/lib/session';
 import { prisma } from '@/lib/db';
 import { AppShell } from '@/components/AppShell';
 import { formatUsd } from '@/lib/money';
+import { resolveBilling } from '@/lib/billing';
 import type { QuoteLineItem } from '@/lib/calculations';
 import { lineTotalCents } from '@/lib/calculations';
 
@@ -28,8 +29,15 @@ export default async function InvoiceDetailPage({ params }: Props) {
   if (!invoice || invoice.businessId !== session.businessId) notFound();
   const lines = invoice.lineItems as QuoteLineItem[];
 
+  const billing = resolveBilling(business);
+
   return (
-    <AppShell businessName={business.name}>
+    <AppShell
+      businessName={business.name}
+      planLabel={billing.label}
+      trialExpired={billing.isExpired}
+      trialDaysLeft={billing.isTrial ? billing.trialDaysLeft : undefined}
+    >
       <Link href="/invoices" className="back-link">
         ← Invoices
       </Link>
