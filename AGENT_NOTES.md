@@ -108,8 +108,9 @@ Platform admin: `owner@smithwebco.com` (password in Keychain `handyquote_platfor
 - **Resend from-domain:** still onboarding@resend.dev until `quickhandyquote.com` verified in Resend (SPF/DKIM)
 - Photos: R2 optional — needs Coolify `R2_*` env (code ready; see Photo object storage section)
 - Rate limits are in-process (per container); fine for single Coolify replica
-- **No automated DB backups yet** (single VPS volume) — pre-live residual risk
-- Audit highs still open: payment-record idempotency/atomic balance, XFF rate limits, route CI, pagination (see punch list)
+- **Backup cron must be installed on VPS** (`scripts/backup-postgres.sh` — see DEPLOY.md); script is in repo, not yet verified on prod
+- Card deposits + Pro checkout still deferred (charge 501)
+- Route-level e2e still thin (lib tests + CI green)
 
 ## Demo (prod)
 

@@ -57,7 +57,7 @@ export async function POST(_req: NextRequest, ctx: Ctx) {
       throw e;
     }
 
-    // Unique invoice number under concurrency: max existing + 1 in transaction
+    // Unique invoice number under concurrency: lock business row + count
     const result = await prisma.$transaction(async (tx) => {
       // Re-check invoice inside txn
       const existing = await tx.invoice.findUnique({ where: { quoteId: quote!.id } });
@@ -66,17 +66,12 @@ export async function POST(_req: NextRequest, ctx: Ctx) {
         return { invoice: existing, quote: q, already: true as const };
       }
 
-      const last = await tx.invoice.findFirst({
+      // Serialize invoice number allocation per tenant
+      await tx.$queryRaw`SELECT id FROM "Business" WHERE id = ${session.businessId} FOR UPDATE`;
+      const invCount = await tx.invoice.count({
         where: { businessId: session.businessId },
-        orderBy: { createdAt: 'desc' },
-        select: { number: true },
       });
-      let seq = 1;
-      if (last?.number) {
-        const m = last.number.match(/(\d+)$/);
-        if (m) seq = parseInt(m[1], 10) + 1;
-      }
-      const number = `INV-${String(seq).padStart(5, '0')}`;
+      const number = `INV-${String(invCount + 1).padStart(5, '0')}`;
 
       const invoice = await tx.invoice.create({
         data: {

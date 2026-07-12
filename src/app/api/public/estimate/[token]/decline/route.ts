@@ -5,6 +5,7 @@ import { isValidPublicToken } from '@/lib/authz';
 import { declineWriteGuard } from '@/lib/quote-status';
 import { logActivity } from '@/lib/activity';
 import { jsonError, jsonOk, errorFromException } from '@/lib/http';
+import { clientIp, rateLimit } from '@/lib/rate-limit';
 
 const schema = z.object({
   reason: z.string().max(1000).optional(),
@@ -14,6 +15,15 @@ type Ctx = { params: Promise<{ token: string }> };
 
 export async function POST(req: NextRequest, ctx: Ctx) {
   try {
+    const limited = rateLimit({
+      key: `decline:${clientIp(req)}`,
+      limit: 30,
+      windowMs: 15 * 60_000,
+    });
+    if (!limited.ok) {
+      return jsonError('Too many attempts — try again later', 429);
+    }
+
     const { token } = await ctx.params;
     if (!isValidPublicToken(token)) return jsonError('Not found', 404);
 

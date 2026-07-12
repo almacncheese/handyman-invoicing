@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { requireSession } from '@/lib/session';
 import { assertSameBusiness } from '@/lib/authz';
-import { formatQuoteNumber } from '@/lib/quote-numbers';
+import { allocateQuoteNumber } from '@/lib/quote-numbers';
 import { jsonOk, errorFromException } from '@/lib/http';
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -16,14 +16,7 @@ export async function POST(_req: NextRequest, ctx: Ctx) {
     assertSameBusiness(session, source);
 
     const quote = await prisma.$transaction(async (tx) => {
-      const business = await tx.business.findUniqueOrThrow({
-        where: { id: session.businessId },
-      });
-      const number = formatQuoteNumber(business.quotePrefix, business.nextQuoteNumber);
-      await tx.business.update({
-        where: { id: business.id },
-        data: { nextQuoteNumber: business.nextQuoteNumber + 1 },
-      });
+      const number = await allocateQuoteNumber(tx, session.businessId);
 
       return tx.quote.create({
         data: {

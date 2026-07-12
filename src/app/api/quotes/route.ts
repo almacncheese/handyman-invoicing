@@ -8,9 +8,10 @@ import {
   QuoteCalcError,
   type LooseLineInput,
 } from '@/lib/calculations';
-import { formatQuoteNumber } from '@/lib/quote-numbers';
+import { allocateQuoteNumber } from '@/lib/quote-numbers';
 import { logActivity } from '@/lib/activity';
 import { jsonError, jsonOk, errorFromException } from '@/lib/http';
+import { parsePagination, pageMeta } from '@/lib/pagination';
 import { Prisma } from '@prisma/client';
 
 const lineSchema = z.object({
@@ -56,28 +57,35 @@ export async function GET(req: NextRequest) {
     const status = req.nextUrl.searchParams.get('status');
     const q = req.nextUrl.searchParams.get('q')?.trim();
     const customerId = req.nextUrl.searchParams.get('customerId');
+    const { page, limit, skip } = parsePagination(req.nextUrl.searchParams);
 
-    const quotes = await prisma.quote.findMany({
-      where: {
-        businessId: session.businessId,
-        ...(status && status !== 'all' ? { status } : {}),
-        ...(customerId ? { customerId } : {}),
-        ...(q
-          ? {
-              OR: [
-                { title: { contains: q, mode: 'insensitive' } },
-                { number: { contains: q, mode: 'insensitive' } },
-                { jobAddress: { contains: q, mode: 'insensitive' } },
-                { customer: { name: { contains: q, mode: 'insensitive' } } },
-              ],
-            }
-          : {}),
-      },
-      orderBy: { updatedAt: 'desc' },
-      include: { customer: true },
-      take: 200,
-    });
-    return jsonOk({ quotes });
+    const where: Prisma.QuoteWhereInput = {
+      businessId: session.businessId,
+      ...(status && status !== 'all' ? { status } : {}),
+      ...(customerId ? { customerId } : {}),
+      ...(q
+        ? {
+            OR: [
+              { title: { contains: q, mode: 'insensitive' as const } },
+              { number: { contains: q, mode: 'insensitive' as const } },
+              { jobAddress: { contains: q, mode: 'insensitive' as const } },
+              { customer: { name: { contains: q, mode: 'insensitive' as const } } },
+            ],
+          }
+        : {}),
+    };
+
+    const [total, quotes] = await Promise.all([
+      prisma.quote.count({ where }),
+      prisma.quote.findMany({
+        where,
+        orderBy: { updatedAt: 'desc' },
+        include: { customer: true },
+        take: limit,
+        skip,
+      }),
+    ]);
+    return jsonOk({ quotes, page: pageMeta(page, limit, total) });
   } catch (e) {
     return errorFromException(e);
   }
@@ -112,11 +120,7 @@ export async function POST(req: NextRequest) {
       const depositPercent = body.depositPercent ?? business.defaultDeposit;
       const totals = calculateQuoteTotal(lines, { taxPercent, depositPercent });
 
-      const number = formatQuoteNumber(business.quotePrefix, business.nextQuoteNumber);
-      await tx.business.update({
-        where: { id: business.id },
-        data: { nextQuoteNumber: business.nextQuoteNumber + 1 },
-      });
+      const number = await allocateQuoteNumber(tx, session.businessId);
 
       const validUntil = body.validDays
         ? new Date(Date.now() + body.validDays * 86400000)

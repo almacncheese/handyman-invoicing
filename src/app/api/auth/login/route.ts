@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { createSessionToken, setSessionCookie } from '@/lib/session';
 import { jsonError, jsonOk, errorFromException } from '@/lib/http';
-import { clientIp, rateLimit } from '@/lib/rate-limit';
+import { clientIp, rateLimit, rateLimitKey } from '@/lib/rate-limit';
 
 const schema = z.object({
   email: z.string().email(),
@@ -13,16 +13,20 @@ const schema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    const body = schema.parse(await req.json());
+    const email = body.email.toLowerCase().trim();
     const ip = clientIp(req);
-    const limited = rateLimit({ key: `login:${ip}`, limit: 20, windowMs: 15 * 60_000 });
+    // IP + account composite: spoofing XFF alone cannot reset a targeted lockout
+    const limited = rateLimit({
+      key: rateLimitKey({ action: 'login', ip, account: email }),
+      limit: 20,
+      windowMs: 15 * 60_000,
+    });
     if (!limited.ok) {
       return jsonError('Too many login attempts — try again later', 429, {
         retryAfterSec: limited.retryAfterSec,
       });
     }
-
-    const body = schema.parse(await req.json());
-    const email = body.email.toLowerCase().trim();
 
     const user = await prisma.user.findFirst({
       where: { email, active: true },

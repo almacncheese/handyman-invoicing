@@ -132,6 +132,11 @@ export function QuoteActions({
       const invId = await ensureInvoiceId();
       const remaining = Math.max(0, depositCents - amountPaidCents) || depositCents;
       if (remaining <= 0) throw new Error('Deposit already fully recorded');
+      // Stable per click so retries/double-submit replay instead of double-posting
+      const idempotencyKey =
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? `manual_${invId}_${crypto.randomUUID()}`
+          : `manual_${invId}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       const res = await fetch('/api/payments/record', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -140,11 +145,16 @@ export function QuoteActions({
           amountCents: remaining,
           method,
           note: `Recorded ${method}`,
+          idempotencyKey,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Record failed');
-      setMsg(`Recorded ${method}: ${formatUsd(remaining)}`);
+      setMsg(
+        data.replayed
+          ? `Already recorded ${method}`
+          : `Recorded ${method}: ${formatUsd(remaining)}`,
+      );
       router.refresh();
     });
   }

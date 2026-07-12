@@ -74,6 +74,28 @@ Secrets live in Coolify’s encrypted env store. Emergency copies: root-only fil
 - [ ] Login + send estimate + open public link on a **phone** (not just laptop)  
 - [ ] Card charges still 501 / manual record only — intentional  
 
+## Database backups (required for real tenants)
+
+A single Docker volume is **not** a backup. Install a daily dump on the VPS:
+
+```bash
+# On VPS — once
+sudo mkdir -p /var/backups/handyquote
+sudo tee /opt/handyquote-backup.sh >/dev/null <<'SH'
+#!/usr/bin/env bash
+export BACKUP_DIR=/var/backups/handyquote
+export RETAIN_DAYS=14
+# Optional off-box: export RCLONE_REMOTE=b2:handyquote-backups
+bash /path/to/repo/scripts/backup-postgres.sh
+SH
+# Or copy scripts/backup-postgres.sh to /opt/ and chmod +x
+
+# Cron 03:00 UTC daily
+echo '0 3 * * * root /opt/handyquote-backup.sh >> /var/log/handyquote-backup.log 2>&1' | sudo tee /etc/cron.d/handyquote-backup
+```
+
+Confirm a `.sql.gz` appears under `/var/backups/handyquote` after the first run. Prefer also copying off-box (`RCLONE_REMOTE`).
+
 ## Post-deploy verify
 
 ```bash

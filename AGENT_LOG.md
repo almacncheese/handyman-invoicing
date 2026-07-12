@@ -2,10 +2,15 @@
 
 ---
 
+## 2026-07-11 — Grok: platform hardening train (audit highs + CI + backup)
+**Did:** Committed criticals `c61ad8d`. Hardened: payment record (required idempotency + FOR UPDATE), CF-first rate limits + login IP+email key, decline rate limit, atomic quote numbers, locked invoice numbers, list pagination, send status gate, CI workflow, `scripts/backup-postgres.sh` + DEPLOY docs. 49 tests + typecheck + build green.
+**Found:** Pagination `mode: 'insensitive'` needs Prisma `as const` / QuoteWhereInput. Remaining product gap: card pay + Pro checkout intentionally still deferred.
+**Status:** Ready to commit/push/redeploy; VPS backup cron still needs Al install.
+
 ## 2026-07-11 — Grok: pre-live gate process + critical lifecycle fixes
 **Did:** Encoded prevention so we don't ship-then-audit again: portfolio `~/dev/_PRE-LIVE-GATE.md`, Grok skill `/pre-live-gate`, Claude command, LESSONS + code-gotchas/deploy-safely/greenfield/subagent preamble. Fixed audit criticals C1–C3: demo-scoped seed (no global wipe), decline race-safe `updateMany`, convert only via `canConvertToInvoice` (no void resurrection). Regression tests; punch list + audit HTML under `docs/`.
 **Found:** Root miss was process (builder self-certify, half-fixed sibling writers), not "can't see races." Residual: no automated backups; audit highs (payment record race, XFF limits, CI) still open.
-**Status:** Process live globally; criticals fixed in code (uncommitted). Deploy when Al wants. Backups still needed before more tenants.
+**Status:** Process live globally; criticals fixed; follow-up hardening commit next.
 
 ---
 

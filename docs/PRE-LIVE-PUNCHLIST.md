@@ -10,22 +10,26 @@ Portfolio gate: `~/dev/_PRE-LIVE-GATE.md`.
 | C1 | Unscoped seed wipe (`business.deleteMany`) gated by env | **Fixed 2026-07-11** | `prisma/seed.ts` — demo-tenant wipe only; full wipe needs `SEED_WIPE_ALL`+`CONFIRM`, refused in prod |
 | C2 | Decline can clobber concurrent accept | **Fixed 2026-07-11** | `decline/route.ts` + `declineWriteGuard()` |
 | C3 | Voided quote convertible via `acceptedAt` heal | **Fixed 2026-07-11** | `convert/route.ts` + `canConvertToInvoice()` |
-| C4 | Same wipe class / no backup story | Wipe half fixed; **backup still open** | Need off-box `pg_dump` / Coolify backup before more tenants |
+| C4 | Same wipe class / no backup story | Wipe fixed; **backup script added — install cron on VPS** | `scripts/backup-postgres.sh` + DEPLOY.md |
 
 ## Regression tests locked in
 
 - `src/lib/quote-status.test.ts` — void terminal, convert gate, decline guard shape
 - `src/lib/quote-invoice.test.ts` — void cannot build invoice
+- `src/lib/rate-limit.test.ts` — CF IP preference
+- `src/lib/pagination.test.ts`, `quote-numbers.test.ts`
 
-## Highs still open (not stop-ship for current deferred card payments, but track)
+## Highs
 
-- [ ] Rate limit not solely on spoofable XFF (prefer trusted edge IP)
-- [ ] Payment record: client idempotency key + atomic balance increment
-- [ ] Enforce `canTransition` on every status-mutating route (not only void/convert)
-- [ ] Quote/invoice number allocation under concurrency
-- [ ] List pagination
-- [ ] Route-level tests + CI
-- [ ] Backups + monitoring on single-VPS topology
+- [x] Rate limit prefers `cf-connecting-ip`; login uses IP+email composite key
+- [x] Payment record: required client idempotency key + `SELECT FOR UPDATE` + increment
+- [x] Send/void/convert/decline use shared status gates
+- [x] Quote numbers via atomic `increment`; invoice numbers under business row lock
+- [x] List pagination (`page` meta) on quotes / invoices / customers
+- [x] GitHub Actions CI (`npm test` + typecheck + build)
+- [x] Backup script (`scripts/backup-postgres.sh`) — **ops: install daily cron on VPS**
+- [ ] Full route-level integration tests (lib tests + CI cover criticals; e2e still thin)
+- [ ] Card deposits + Pro Stripe checkout (product-deferred; charge remains 501)
 
 ## Strengths to preserve
 

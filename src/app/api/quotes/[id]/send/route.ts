@@ -10,6 +10,7 @@ import { jsonError, jsonOk, errorFromException } from '@/lib/http';
 import { resolveBilling } from '@/lib/billing';
 import { sendEstimateEmail } from '@/lib/email';
 import { formatUsd } from '@/lib/money';
+import { canTransition, type QuoteStatus } from '@/lib/quote-status';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -54,8 +55,9 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       );
     }
 
-    if (quote!.status === 'void') {
-      return jsonError('Cannot share a voided estimate', 409);
+    const status = quote!.status as QuoteStatus;
+    if (status === 'void' || status === 'paid') {
+      return jsonError(`Cannot share a ${status} estimate`, 409);
     }
 
     let body: z.infer<typeof bodySchema> = {};
@@ -67,7 +69,10 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     }
 
     const publicToken = quote!.publicToken || generatePublicToken();
-    const isFirstSend = quote!.status === 'draft';
+    const isFirstSend = status === 'draft';
+    if (isFirstSend && !canTransition(status, 'sent')) {
+      return jsonError(`Cannot send estimate in status ${status}`, 409);
+    }
 
     const updated = await prisma.quote.update({
       where: { id },
