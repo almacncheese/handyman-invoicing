@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-07-12 — Grok: install HandyQuote DB backup cron on VPS
+**Did:** Deployed `scripts/backup-postgres.sh` → `/opt/handyquote-backup.sh`; cron `/etc/cron.d/handyquote-backup` at 03:15 UTC; first dump verified (`handyquote-db` → `/var/backups/handyquote/*.sql.gz`, gzip SQL). Script improved to resolve container without DATABASE_URL.
+**Found:** Container name is exactly `handyquote-db` (postgres:16-alpine). Local VPS volume only — off-box rclone still optional.
+**Status:** Daily backups live. Off-box copy still nice-to-have.
+
 ## 2026-07-11 — Grok: platform hardening train (audit highs + CI + backup)
 **Did:** Committed criticals `c61ad8d`. Hardened: payment record (required idempotency + FOR UPDATE), CF-first rate limits + login IP+email key, decline rate limit, atomic quote numbers, locked invoice numbers, list pagination, send status gate, CI workflow, `scripts/backup-postgres.sh` + DEPLOY docs. 49 tests + typecheck + build green.
 **Found:** Pagination `mode: 'insensitive'` needs Prisma `as const` / QuoteWhereInput. Remaining product gap: card pay + Pro checkout intentionally still deferred.

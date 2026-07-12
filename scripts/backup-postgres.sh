@@ -12,26 +12,47 @@
 set -euo pipefail
 
 URL="${1:-${DATABASE_URL:-}}"
-if [[ -z "$URL" ]]; then
-  echo "Usage: DATABASE_URL=postgres://... $0   OR   $0 <database-url>" >&2
-  exit 1
-fi
-
 BACKUP_DIR="${BACKUP_DIR:-/var/backups/handyquote}"
 RETAIN_DAYS="${RETAIN_DAYS:-14}"
+# Coolify often prefixes names; allow override
+DB_CONTAINER="${HANDYQUOTE_DB_CONTAINER:-}"
+DB_USER="${HANDYQUOTE_DB_USER:-handyquote}"
+DB_NAME="${HANDYQUOTE_DB_NAME:-handyquote}"
+
 mkdir -p "$BACKUP_DIR"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 OUT="${BACKUP_DIR}/handyquote-${STAMP}.sql.gz"
 
-# Prefer docker exec against handyquote-db when available (prod Coolify layout)
-if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx 'handyquote-db'; then
-  docker exec handyquote-db pg_dump -U handyquote handyquote | gzip -c > "$OUT"
-else
-  if ! command -v pg_dump >/dev/null 2>&1; then
-    echo "pg_dump not found and handyquote-db container not running" >&2
-    exit 1
+resolve_db_container() {
+  if [[ -n "$DB_CONTAINER" ]]; then
+    echo "$DB_CONTAINER"
+    return
   fi
+  # Exact name first, then any running container with handyquote + postgres/db in name
+  if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx 'handyquote-db'; then
+    echo 'handyquote-db'
+    return
+  fi
+  local hit
+  hit="$(docker ps --format '{{.Names}}' 2>/dev/null | grep -E 'handyquote.*(db|postgres)|postgres.*handyquote' | head -1 || true)"
+  if [[ -n "$hit" ]]; then
+    echo "$hit"
+    return
+  fi
+  return 1
+}
+
+if CONTAINER="$(resolve_db_container)"; then
+  echo "Dumping via docker exec $CONTAINER ($DB_USER/$DB_NAME)"
+  docker exec "$CONTAINER" pg_dump -U "$DB_USER" "$DB_NAME" | gzip -c > "$OUT"
+elif [[ -n "$URL" ]] && command -v pg_dump >/dev/null 2>&1; then
+  echo "Dumping via pg_dump URL"
   pg_dump "$URL" | gzip -c > "$OUT"
+else
+  echo "No handyquote DB container found and no DATABASE_URL/pg_dump available" >&2
+  echo "Set HANDYQUOTE_DB_CONTAINER or DATABASE_URL" >&2
+  docker ps --format '  {{.Names}}\t{{.Image}}' 2>/dev/null || true
+  exit 1
 fi
 
 # Drop local copies older than RETAIN_DAYS

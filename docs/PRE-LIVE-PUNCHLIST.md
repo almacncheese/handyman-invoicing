@@ -10,7 +10,7 @@ Portfolio gate: `~/dev/_PRE-LIVE-GATE.md`.
 | C1 | Unscoped seed wipe (`business.deleteMany`) gated by env | **Fixed 2026-07-11** | `prisma/seed.ts` — demo-tenant wipe only; full wipe needs `SEED_WIPE_ALL`+`CONFIRM`, refused in prod |
 | C2 | Decline can clobber concurrent accept | **Fixed 2026-07-11** | `decline/route.ts` + `declineWriteGuard()` |
 | C3 | Voided quote convertible via `acceptedAt` heal | **Fixed 2026-07-11** | `convert/route.ts` + `canConvertToInvoice()` |
-| C4 | Same wipe class / no backup story | Wipe fixed; **backup script added — install cron on VPS** | `scripts/backup-postgres.sh` + DEPLOY.md |
+| C4 | Same wipe class / no backup story | Wipe fixed; **VPS cron LIVE 2026-07-12** | `/opt/handyquote-backup.sh` + `/etc/cron.d/handyquote-backup` |
 
 ## Regression tests locked in
 
@@ -27,7 +27,7 @@ Portfolio gate: `~/dev/_PRE-LIVE-GATE.md`.
 - [x] Quote numbers via atomic `increment`; invoice numbers under business row lock
 - [x] List pagination (`page` meta) on quotes / invoices / customers
 - [x] GitHub Actions CI (`npm test` + typecheck + build)
-- [x] Backup script (`scripts/backup-postgres.sh`) — **ops: install daily cron on VPS**
+- [x] Backup script + **VPS cron installed** (`/opt/handyquote-backup.sh`, 03:15 UTC); optional off-box rclone
 - [ ] Full route-level integration tests (lib tests + CI cover criticals; e2e still thin)
 - [ ] Card deposits + Pro Stripe checkout (product-deferred; charge remains 501)
 

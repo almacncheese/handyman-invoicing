@@ -108,7 +108,7 @@ Platform admin: `owner@smithwebco.com` (password in Keychain `handyquote_platfor
 - **Resend from-domain:** still onboarding@resend.dev until `quickhandyquote.com` verified in Resend (SPF/DKIM)
 - Photos: R2 optional — needs Coolify `R2_*` env (code ready; see Photo object storage section)
 - Rate limits are in-process (per container); fine for single Coolify replica
-- **Backup cron must be installed on VPS** (`scripts/backup-postgres.sh` — see DEPLOY.md); script is in repo, not yet verified on prod
+- **Backup cron LIVE on VPS** (2026-07-12): `/opt/handyquote-backup.sh` + `/etc/cron.d/handyquote-backup` (03:15 UTC daily); dumps in `/var/backups/handyquote/` (14d retain). First dump verified. Off-box (`RCLONE_REMOTE`) still optional.
 - Card deposits + Pro checkout still deferred (charge 501)
 - Route-level e2e still thin (lib tests + CI green)
 

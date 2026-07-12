@@ -76,25 +76,25 @@ Secrets live in Coolify’s encrypted env store. Emergency copies: root-only fil
 
 ## Database backups (required for real tenants)
 
-A single Docker volume is **not** a backup. Install a daily dump on the VPS:
+A single Docker volume is **not** a backup.
+
+**Status (2026-07-12):** installed on VPS  
+| Piece | Path |
+|-------|------|
+| Script | `/opt/handyquote-backup.sh` (from `scripts/backup-postgres.sh`) |
+| Cron | `/etc/cron.d/handyquote-backup` — `15 3 * * *` UTC daily |
+| Output | `/var/backups/handyquote/handyquote-*.sql.gz` (14-day retain) |
+| Log | `/var/log/handyquote-backup.log` |
+| Source | `docker exec handyquote-db pg_dump -U handyquote handyquote` |
+
+Re-install / update script after changes:
 
 ```bash
-# On VPS — once
-sudo mkdir -p /var/backups/handyquote
-sudo tee /opt/handyquote-backup.sh >/dev/null <<'SH'
-#!/usr/bin/env bash
-export BACKUP_DIR=/var/backups/handyquote
-export RETAIN_DAYS=14
-# Optional off-box: export RCLONE_REMOTE=b2:handyquote-backups
-bash /path/to/repo/scripts/backup-postgres.sh
-SH
-# Or copy scripts/backup-postgres.sh to /opt/ and chmod +x
-
-# Cron 03:00 UTC daily
-echo '0 3 * * * root /opt/handyquote-backup.sh >> /var/log/handyquote-backup.log 2>&1' | sudo tee /etc/cron.d/handyquote-backup
+scp scripts/backup-postgres.sh root@72.62.169.186:/opt/handyquote-backup.sh
+ssh root@72.62.169.186 'chmod 750 /opt/handyquote-backup.sh && /opt/handyquote-backup.sh'
 ```
 
-Confirm a `.sql.gz` appears under `/var/backups/handyquote` after the first run. Prefer also copying off-box (`RCLONE_REMOTE`).
+Optional off-box: set `RCLONE_REMOTE=b2:handyquote-backups` (or similar) in the cron environment when rclone is configured.
 
 ## Post-deploy verify
 
