@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-07-11 — Grok: pre-live gate process + critical lifecycle fixes
+**Did:** Encoded prevention so we don't ship-then-audit again: portfolio `~/dev/_PRE-LIVE-GATE.md`, Grok skill `/pre-live-gate`, Claude command, LESSONS + code-gotchas/deploy-safely/greenfield/subagent preamble. Fixed audit criticals C1–C3: demo-scoped seed (no global wipe), decline race-safe `updateMany`, convert only via `canConvertToInvoice` (no void resurrection). Regression tests; punch list + audit HTML under `docs/`.
+**Found:** Root miss was process (builder self-certify, half-fixed sibling writers), not "can't see races." Residual: no automated backups; audit highs (payment record race, XFF limits, CI) still open.
+**Status:** Process live globally; criticals fixed in code (uncommitted). Deploy when Al wants. Backups still needed before more tenants.
+
+---
+
+## 2026-07-11 — ⚠️ AUTO-BREADCRUMB (no /end-session) — session 1c283081
+**Did (git facts, unverified):** branch `main`; 3 uncommitted file(s): AGENT_LOG.md,AGENT_NOTES.md .claude/
+**Last commit:** 05cb95a chore(secrets): Keychain vault + pull/write scripts for this machine
+**Found:** _(not captured — auto-breadcrumb can't summarize. Write this up from memory, or next time run /end-session.)_
+**Status:** dirty tree at session end — a proper AGENT_LOG entry is owed.
+
+
+## 2026-07-11 — Grok, session end
+**Did:** Shipped HandyQuote live at quickhandyquote.com (Coolify+nginx+LE). Brand, DNS, admin (`owner@smithwebco.com`/Keychain), trial→Pro $29, Resend email, password reset/change, Account menu UX audit, reports, R2 photo path, secrets vault (Keychain+scripts). Commits through `05cb95a` / later deploy queues. Payments intentionally deferred.
+**Found:** Coolify build-time NODE_ENV + Turbopack layout breaks Docker builds; schema drift vs init migration; discoverability > missing features (password); mid-redeploy blanks look like outages; secrets must leave chat (Keychain+Coolify).
+**Promoted to NOTES:** DON'T-repeat docker/ux/schema rows; secrets section already present; known issues (Resend domain, R2 env, payments last); admin/demo logins.
+**Status:** Live product-complete except card/Pro checkout. Next: real usage, Resend domain verify, rotate admin password, optional R2 env.
+
 ## 2026-07-11 — Resend email + password reset (payments deferred)
 
 **Did:** Resend integration (estimate, staff invite, password reset, signed notify). Forgot/reset pages. Email estimate button. /billing plan page without checkout. RESEND_API_KEY + FROM set in Coolify (runtime). Password-reset columns on prod DB.

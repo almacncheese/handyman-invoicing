@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { isValidPublicToken } from '@/lib/authz';
+import { declineWriteGuard } from '@/lib/quote-status';
 import { logActivity } from '@/lib/activity';
 import { jsonError, jsonOk, errorFromException } from '@/lib/http';
 
@@ -28,8 +29,10 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       return jsonError('Estimate cannot be declined in its current state', 409);
     }
 
-    const updated = await prisma.quote.update({
-      where: { id: quote.id },
+    // Conditional write — same race pattern as accept. A concurrent accept that
+    // commits between our read and write must win; never clobber a signature.
+    const updated = await prisma.quote.updateMany({
+      where: declineWriteGuard(quote.id),
       data: {
         status: 'declined',
         declinedAt: new Date(),
@@ -37,6 +40,14 @@ export async function POST(req: NextRequest, ctx: Ctx) {
         viewedAt: quote.viewedAt || new Date(),
       },
     });
+
+    if (updated.count === 0) {
+      const fresh = await prisma.quote.findUnique({ where: { id: quote.id } });
+      return jsonOk({
+        already: true,
+        status: fresh?.status ?? quote.status,
+      });
+    }
 
     await logActivity({
       businessId: quote.businessId,
@@ -48,7 +59,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
         : 'Customer declined the estimate',
     });
 
-    return jsonOk({ already: false, status: updated.status });
+    return jsonOk({ already: false, status: 'declined' });
   } catch (e) {
     if (e instanceof z.ZodError) {
       return jsonError(e.errors[0]?.message || 'Invalid input', 422);

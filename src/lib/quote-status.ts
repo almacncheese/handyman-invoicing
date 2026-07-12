@@ -47,6 +47,31 @@ export function assertTransition(from: QuoteStatus, to: QuoteStatus): void {
   }
 }
 
+/** Statuses from which a customer may still decline (pre-accept). */
+export const DECLINABLE_STATUSES = ['draft', 'sent', 'viewed'] as const;
+
+/**
+ * Prisma `where` for a race-safe decline — mirrors accept's conditional write.
+ * Must reject rows that already have a signature or terminal status.
+ */
+export function declineWriteGuard(quoteId: string) {
+  return {
+    id: quoteId,
+    acceptedAt: null as Date | null,
+    signatureData: null as string | null,
+    status: { in: [...DECLINABLE_STATUSES] },
+  };
+}
+
+/**
+ * May this quote become an invoice?
+ * Status is the source of truth — never promote via acceptedAt alone
+ * (that resurrected voided quotes in convert).
+ */
+export function canConvertToInvoice(status: QuoteStatus): boolean {
+  return status === 'accepted';
+}
+
 export const JOB_TYPES = [
   { value: 'general', label: 'General handyman' },
   { value: 'plumbing', label: 'Plumbing' },

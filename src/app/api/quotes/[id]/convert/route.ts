@@ -5,6 +5,7 @@ import { requireSession } from '@/lib/session';
 import { assertSameBusiness } from '@/lib/authz';
 import { buildInvoiceFromQuote, ConversionError } from '@/lib/quote-invoice';
 import type { QuoteLineItem } from '@/lib/calculations';
+import { canConvertToInvoice, type QuoteStatus } from '@/lib/quote-status';
 import { logActivity } from '@/lib/activity';
 import { jsonError, jsonOk, errorFromException } from '@/lib/http';
 
@@ -26,21 +27,22 @@ export async function POST(_req: NextRequest, ctx: Ctx) {
       return jsonOk({ invoice: quote!.invoice, quote, already: true });
     }
 
-    // Allow convert when accepted, or when signature exists even if status lagged
-    let statusForConvert = quote!.status;
-    if (quote!.acceptedAt && statusForConvert !== 'accepted' && statusForConvert !== 'invoiced') {
-      await prisma.quote.update({
-        where: { id },
-        data: { status: 'accepted' },
-      });
-      statusForConvert = 'accepted';
+    // Status is the only gate — do NOT heal status from acceptedAt.
+    // That path resurrected voided (terminal) quotes into invoices.
+    const status = quote!.status as QuoteStatus;
+    if (!canConvertToInvoice(status)) {
+      return jsonError(
+        `Quote must be accepted before invoicing (status=${status})`,
+        422,
+        { code: 'NOT_ACCEPTED' },
+      );
     }
 
     let draft;
     try {
       draft = buildInvoiceFromQuote({
         id: quote!.id,
-        status: statusForConvert as never,
+        status,
         lineItems: quote!.lineItems as QuoteLineItem[],
         taxPercent: quote!.taxPercent,
         depositPercent: quote!.depositPercent,

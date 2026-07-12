@@ -33,9 +33,8 @@ npm run db:seed
 npm run dev
 ```
 
-Demo login (after seed): `demo@handyquote.local` / `demo-demo-demo`
-
-Verified 2026-07-10: `npm test` 24/24 · `npm run build` green · API smoke login→send→accept→invoice→mock deposit (+ idempotent replay).
+Demo login (after seed): `demo@quickhandyquote.com` / `demo-demo-demo`  
+Platform admin: `owner@smithwebco.com` (password in Keychain `handyquote_platform_admin_password`) → `/admin`
 
 ## Things that broke before — DON'T repeat
 
@@ -49,6 +48,14 @@ Verified 2026-07-10: `npm test` 24/24 · `npm run build` green · API smoke logi
 | [sign] Overwrite on race | Clobber signature | `updateMany` where signature still null |
 | [docker] `npm ci --only=production` then build | Missing devDeps | Multi-stage Dockerfile |
 | [deps] Old Next 15.3.3 | CVE warning | Pin patched Next (see package.json) |
+| [docker] Coolify injects NODE_ENV=production as build ARG | `npm ci` skips devDeps → next build dies | Dockerfile force `npm ci --include=dev`; secrets **runtime-only** in Coolify |
+| [docker] Turbopack + custom root layout head/script | `/_global-error` prerender useContext null | `next build --webpack` + minimal root layout |
+| [ux] Capability exists but no signed-in path (e.g. password) | User thinks feature missing | Account menu + Settings → Security; don't rely on forgot-password alone |
+| [schema] Init migration lagged product schema | Prod missing columns (User.active) | Keep migrations in sync; `db push` only emergency; follow-up migrate |
+| [lifecycle] Race-safe accept only; decline was plain update | Concurrent decline clobbered signature | `declineWriteGuard` + `updateMany`; same pattern as accept |
+| [lifecycle] Convert healed status from `acceptedAt` | Voided quotes resurrected into invoices | `canConvertToInvoice(status)` only — never acceptedAt bypass |
+| [data-loss] Seed wipe = global `deleteMany` on NODE_ENV | One env mistake deletes all tenants | Demo-scoped wipe; full wipe needs SEED_WIPE_ALL+CONFIRM; refused in prod |
+| [audit] Shipped live then audited | Criticals found after real signups possible | `~/dev/_PRE-LIVE-GATE.md` + `/pre-live-gate` *before* real tenants |
 
 ## Brand assets
 
@@ -62,8 +69,9 @@ Verified 2026-07-10: `npm test` 24/24 · `npm run build` green · API smoke logi
 ## Conventions
 
 - Totals **server-authoritative** on every quote save
-- Status machine: `src/lib/quote-status.ts` (forward-only)
+- Status machine: `src/lib/quote-status.ts` (forward-only) — **every** status writer must use it (`canTransition` / `canConvertToInvoice` / `declineWriteGuard`); no one-off heuristics
 - Product docs: `PRODUCT_CONTRACT.md`, `ACCEPTANCE.md`, `DECISIONS.md`, `TEST_PLAN.md`
+- Pre-live / audit punch list: `docs/PRE-LIVE-PUNCHLIST.md` · portfolio gate: `~/dev/_PRE-LIVE-GATE.md`
 
 ## Secrets (don't lose them)
 
@@ -85,12 +93,23 @@ Verified 2026-07-10: `npm test` 24/24 · `npm run build` green · API smoke logi
 6. Card payments intentionally disabled until Al green-lights processor work
 7. Secrets runtime-only in Coolify (not build-time)
 
+## Before real tenants / money / e-sign risk (pre-live gate)
+
+1. Run **`/pre-live-gate`** — checklist: `~/dev/_PRE-LIVE-GATE.md`
+2. Adversarial pass by a **different** agent than the builder (Claude / `adversarial-qa`)
+3. Sibling-writer sweep on quote status, signatures, payments
+4. Confirm seed cannot global-wipe prod (`prisma/seed.ts` demo-scoped only)
+5. Backups: still **open** — schedule off-box `pg_dump` before more paying tenants
+6. Punch list status: `docs/PRE-LIVE-PUNCHLIST.md`
+
 ## Active known issues
 
-- **Card payments disabled** (`/api/payments/charge` + public pay → 501). Manual cash/Zelle record only.
-- Photos: data-URL fallback OR Cloudflare R2 when `R2_*` env set (`src/lib/storage.ts`, `POST /api/uploads/photo`)
-- SaaS billing for HandyQuote Pro not wired (pricing is marketing)
+- **Card deposits + Pro checkout still deferred** (charge routes 501; trial/plan enforcement live)
+- **Resend from-domain:** still onboarding@resend.dev until `quickhandyquote.com` verified in Resend (SPF/DKIM)
+- Photos: R2 optional — needs Coolify `R2_*` env (code ready; see Photo object storage section)
 - Rate limits are in-process (per container); fine for single Coolify replica
+- **No automated DB backups yet** (single VPS volume) — pre-live residual risk
+- Audit highs still open: payment-record idempotency/atomic balance, XFF rate limits, route CI, pagination (see punch list)
 
 ## Demo (prod)
 

@@ -44,4 +44,16 @@ describe('buildInvoiceFromQuote', () => {
       }),
     ).toThrow(/already converted/);
   });
+
+  it('rejects void even if caller forgot to gate (status is sole authority)', () => {
+    expect(() =>
+      buildInvoiceFromQuote({
+        id: 'q1',
+        status: 'void',
+        lineItems: baseLines,
+        taxPercent: 0,
+        depositPercent: 0,
+      }),
+    ).toThrow(ConversionError);
+  });
 });

@@ -1,6 +1,11 @@
 /**
- * Demo seed — safe for local; on production prefer non-destructive first-run
- * unless SEED_WIPE=1 is set.
+ * Demo seed — NEVER unscoped-wipes all tenants.
+ *
+ * Modes:
+ * - Default (local or SEED_WIPE=1): delete ONLY the demo business(es), then recreate.
+ * - Production without SEED_WIPE: non-destructive; skip if demo user exists.
+ * - Nuclear local only: SEED_WIPE_ALL=1 AND SEED_WIPE_ALL_CONFIRM=YES
+ *   (refused when NODE_ENV=production).
  */
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
@@ -16,23 +21,65 @@ const prisma = new PrismaClient();
 const DEMO_EMAIL = process.env.SEED_DEMO_EMAIL || 'demo@quickhandyquote.com';
 const STAFF_EMAIL = process.env.SEED_STAFF_EMAIL || 'staff@quickhandyquote.com';
 const DEMO_PASSWORD = process.env.SEED_DEMO_PASSWORD || 'demo-demo-demo';
+const DEMO_SLUG_PREFIX = 'demo-handyman';
+
+/** Cascade-delete only demo tenant(s) — never every business. */
+async function wipeDemoTenantsOnly() {
+  const demos = await prisma.business.findMany({
+    where: {
+      OR: [
+        { slug: { startsWith: DEMO_SLUG_PREFIX } },
+        { users: { some: { email: DEMO_EMAIL } } },
+        { users: { some: { email: STAFF_EMAIL } } },
+      ],
+    },
+    select: { id: true, slug: true },
+  });
+  for (const b of demos) {
+    // Business cascades: users, customers, quotes, invoices, payments, activity, templates
+    await prisma.business.delete({ where: { id: b.id } });
+    console.log(`Wiped demo business ${b.slug} (${b.id})`);
+  }
+  if (demos.length === 0) {
+    console.log('No demo businesses to wipe');
+  }
+}
+
+async function wipeEntireDatabaseLocalOnly() {
+  const isProd = process.env.NODE_ENV === 'production';
+  if (isProd) {
+    throw new Error('SEED_WIPE_ALL is forbidden when NODE_ENV=production');
+  }
+  if (process.env.SEED_WIPE_ALL_CONFIRM !== 'YES') {
+    throw new Error(
+      'Refusing full wipe: set SEED_WIPE_ALL=1 and SEED_WIPE_ALL_CONFIRM=YES (local only)',
+    );
+  }
+  await prisma.activity.deleteMany();
+  await prisma.payment.deleteMany();
+  await prisma.invoice.deleteMany();
+  await prisma.quote.deleteMany();
+  await prisma.lineTemplate.deleteMany();
+  await prisma.customer.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.business.deleteMany();
+  console.log('FULL local wipe complete (all businesses)');
+}
 
 async function main() {
-  const wipe = process.env.SEED_WIPE === '1' || process.env.NODE_ENV !== 'production';
+  const isProd = process.env.NODE_ENV === 'production';
 
-  if (wipe) {
-    await prisma.activity.deleteMany();
-    await prisma.payment.deleteMany();
-    await prisma.invoice.deleteMany();
-    await prisma.quote.deleteMany();
-    await prisma.lineTemplate.deleteMany();
-    await prisma.customer.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.business.deleteMany();
+  if (process.env.SEED_WIPE_ALL === '1') {
+    await wipeEntireDatabaseLocalOnly();
+  } else if (!isProd || process.env.SEED_WIPE === '1') {
+    // Scoped demo reset only — never global deleteMany on Business
+    await wipeDemoTenantsOnly();
   } else {
     const existing = await prisma.user.findFirst({ where: { email: DEMO_EMAIL } });
     if (existing) {
-      console.log(`Demo user ${DEMO_EMAIL} already exists — skip (set SEED_WIPE=1 to reset)`);
+      console.log(
+        `Demo user ${DEMO_EMAIL} already exists — skip (set SEED_WIPE=1 to reset demo only)`,
+      );
       return;
     }
   }
@@ -40,7 +87,7 @@ async function main() {
   const business = await prisma.business.create({
     data: {
       name: 'Demo Handyman Co',
-      slug: wipe ? 'demo-handyman' : `demo-handyman-${Date.now().toString(36)}`,
+      slug: DEMO_SLUG_PREFIX,
       primaryColor: '#0f5c4c',
       phone: '(555) 010-2000',
       email: 'hello@demo-handyman.local',

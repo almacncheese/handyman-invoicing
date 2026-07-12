@@ -1,0 +1,940 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HandyQuote — Independent Code &amp; Architecture Audit</title>
+<style>
+  @font-face {
+    font-family: 'Report Serif';
+    src: local('Iowan Old Style'), local('Palatino Linotype'), local('Georgia');
+  }
+
+  :root {
+    --paper: #eef0f3;
+    --paper-raised: #ffffff;
+    --paper-sunk: #e2e5ea;
+    --hairline: #d4d8df;
+    --ink: #161a22;
+    --ink-soft: #4b5160;
+    --ink-faint: #767c8a;
+    --accent: #3d4a74;
+    --accent-strong: #2a3559;
+    --accent-soft: #dde1ee;
+    --accent-soft-ink: #2f3a5c;
+
+    --critical: #b3261e;
+    --critical-soft: #f8dedc;
+    --high: #b3540a;
+    --high-soft: #f7e4d0;
+    --medium: #8a6410;
+    --medium-soft: #f2e6c8;
+    --low: #4c5a6b;
+    --low-soft: #e3e7ec;
+    --strength: #2b7a4b;
+    --strength-soft: #dcefe1;
+    --nitpick: #767c8a;
+    --nitpick-soft: #e7e8ec;
+
+    --serif: 'Report Serif', 'Iowan Old Style', 'Palatino Linotype', Georgia, 'Times New Roman', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'Consolas', 'Roboto Mono', monospace;
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #12141a;
+    --paper-raised: #1a1d26;
+    --paper-sunk: #0d0f14;
+    --hairline: #2b2f3a;
+    --ink: #e7e8ec;
+    --ink-soft: #b0b4c0;
+    --ink-faint: #7d8290;
+    --accent: #8f9fd6;
+    --accent-strong: #b3c0ea;
+    --accent-soft: #232a42;
+    --accent-soft-ink: #c3cdef;
+
+    --critical: #ff8479;
+    --critical-soft: #3a1c1c;
+    --high: #ffab6b;
+    --high-soft: #3a2814;
+    --medium: #e8c04f;
+    --medium-soft: #362c11;
+    --low: #a7b1c2;
+    --low-soft: #262a34;
+    --strength: #6fce93;
+    --strength-soft: #163524;
+    --nitpick: #9298a6;
+    --nitpick-soft: #23262f;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #12141a;
+      --paper-raised: #1a1d26;
+      --paper-sunk: #0d0f14;
+      --hairline: #2b2f3a;
+      --ink: #e7e8ec;
+      --ink-soft: #b0b4c0;
+      --ink-faint: #7d8290;
+      --accent: #8f9fd6;
+      --accent-strong: #b3c0ea;
+      --accent-soft: #232a42;
+      --accent-soft-ink: #c3cdef;
+
+      --critical: #ff8479;
+      --critical-soft: #3a1c1c;
+      --high: #ffab6b;
+      --high-soft: #3a2814;
+      --medium: #e8c04f;
+      --medium-soft: #362c11;
+      --low: #a7b1c2;
+      --low-soft: #262a34;
+      --strength: #6fce93;
+      --strength-soft: #163524;
+      --nitpick: #9298a6;
+      --nitpick-soft: #23262f;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--accent-strong); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 0;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  nav.toc {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 28px 18px 40px 28px;
+    font-size: 13px;
+  }
+
+  nav.toc .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-size: 11px;
+    color: var(--ink-faint);
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+
+  nav.toc a {
+    display: block;
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding: 5px 0;
+    border-left: 2px solid transparent;
+    padding-left: 10px;
+    margin-left: -1px;
+  }
+  nav.toc a:hover { color: var(--ink); border-left-color: var(--hairline); }
+  nav.toc a.tag { font-size: 11.5px; }
+
+  nav.toc details { margin-bottom: 2px; }
+  nav.toc summary { cursor: pointer; color: var(--ink-soft); padding: 5px 0 5px 10px; list-style: none; }
+  nav.toc summary::-webkit-details-marker { display: none; }
+  nav.toc summary:hover { color: var(--ink); }
+
+  main { padding: 48px 56px 100px; min-width: 0; }
+
+  .masthead {
+    border-bottom: 1px solid var(--hairline);
+    padding-bottom: 28px;
+    margin-bottom: 40px;
+  }
+  .masthead .kicker {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .masthead h1 {
+    font-family: var(--serif);
+    font-size: 40px;
+    font-weight: 600;
+    line-height: 1.15;
+    margin: 0 0 10px;
+    text-wrap: balance;
+    color: var(--ink);
+  }
+  .masthead .dek {
+    font-size: 17px;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin-bottom: 18px;
+  }
+  .masthead .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
+    font-size: 13px;
+    color: var(--ink-faint);
+  }
+  .masthead .meta-row strong { color: var(--ink-soft); font-weight: 600; }
+
+  section { margin-bottom: 56px; scroll-margin-top: 20px; }
+
+  h2.section-title {
+    font-family: var(--serif);
+    font-size: 27px;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+  .section-sub { color: var(--ink-faint); font-size: 14.5px; margin-bottom: 24px; max-width: 68ch; }
+
+  p { max-width: 72ch; color: var(--ink-soft); }
+  .prose p { margin: 0 0 14px; }
+  .prose strong { color: var(--ink); }
+
+  /* Scorecard */
+  .scorecard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1px;
+    background: var(--hairline);
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .score-cell {
+    background: var(--paper-raised);
+    padding: 20px 18px;
+  }
+  .score-cell .dim { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-bottom: 10px; }
+  .score-cell .grade { font-family: var(--serif); font-size: 34px; font-weight: 700; line-height: 1; margin-bottom: 8px; }
+  .score-cell .grade.g-a { color: var(--strength); }
+  .score-cell .grade.g-b { color: var(--accent); }
+  .score-cell .grade.g-c { color: var(--medium); }
+  .score-cell .grade.g-d { color: var(--high); }
+  .score-cell .note { font-size: 12.5px; color: var(--ink-soft); line-height: 1.45; }
+
+  .stat-strip {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 22px 0 8px;
+  }
+  .stat-chip {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    padding: 9px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    border: 1px solid var(--hairline);
+    background: var(--paper-raised);
+  }
+  .stat-chip .n { font-family: var(--mono); font-weight: 700; font-size: 16px; }
+  .stat-chip.crit .n { color: var(--critical); }
+  .stat-chip.high .n { color: var(--high); }
+  .stat-chip.med .n { color: var(--medium); }
+  .stat-chip.low .n { color: var(--low); }
+  .stat-chip.strong .n { color: var(--strength); }
+  .stat-chip .l { color: var(--ink-faint); }
+
+  /* Finding cards */
+  .finding {
+    background: var(--paper-raised);
+    border: 1px solid var(--hairline);
+    border-left-width: 4px;
+    border-radius: 8px;
+    padding: 18px 20px 18px 18px;
+    margin-bottom: 14px;
+  }
+  .finding.sev-critical { border-left-color: var(--critical); }
+  .finding.sev-high { border-left-color: var(--high); }
+  .finding.sev-medium { border-left-color: var(--medium); }
+  .finding.sev-low { border-left-color: var(--low); }
+  .finding.sev-strength { border-left-color: var(--strength); }
+  .finding.sev-nitpick { border-left-color: var(--nitpick); }
+
+  .finding-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 8px;
+    border-radius: 5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+  .badge.sev-critical { background: var(--critical-soft); color: var(--critical); }
+  .badge.sev-high { background: var(--high-soft); color: var(--high); }
+  .badge.sev-medium { background: var(--medium-soft); color: var(--medium); }
+  .badge.sev-low { background: var(--low-soft); color: var(--low); }
+  .badge.sev-strength { background: var(--strength-soft); color: var(--strength); }
+  .badge.sev-nitpick { background: var(--nitpick-soft); color: var(--nitpick); }
+
+  .badge.verdict { background: transparent; border: 1px solid var(--strength); color: var(--strength); }
+
+  .finding h3 { font-size: 16px; font-weight: 650; margin: 0; color: var(--ink); line-height: 1.4; }
+  .finding p { font-size: 14.5px; color: var(--ink-soft); margin: 0 0 10px; max-width: none; }
+  .finding .rec { font-size: 14px; color: var(--ink-soft); margin: 0; }
+  .finding .rec strong { color: var(--ink); }
+  .evidence {
+    font-family: var(--mono);
+    font-size: 12.3px;
+    background: var(--paper-sunk);
+    color: var(--ink-soft);
+    padding: 9px 12px;
+    border-radius: 6px;
+    margin: 0 0 10px;
+    overflow-x: auto;
+    line-height: 1.55;
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .dim-heading {
+    font-family: var(--mono);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--accent);
+    margin: 30px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .dim-heading:first-child { margin-top: 0; }
+
+  .callout {
+    background: var(--accent-soft);
+    border: 1px solid var(--hairline);
+    border-radius: 9px;
+    padding: 18px 20px;
+    margin: 18px 0;
+  }
+  .callout p { color: var(--accent-soft-ink); margin: 0; font-size: 14.5px; }
+  .callout p + p { margin-top: 8px; }
+  .callout strong { color: inherit; }
+
+  .roadmap { display: flex; flex-direction: column; gap: 0; margin-top: 10px; }
+  .road-step {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 20px;
+    padding: 16px 0;
+    border-top: 1px solid var(--hairline);
+  }
+  .road-step:first-child { border-top: none; }
+  .road-step .when { font-family: var(--mono); font-size: 12px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; padding-top: 2px; }
+  .road-step h4 { margin: 0 0 6px; font-size: 15px; color: var(--ink); }
+  .road-step p { font-size: 14px; margin: 0; }
+  @media (max-width: 700px) { .road-step { grid-template-columns: 1fr; gap: 4px; } }
+
+  table.plain { width: 100%; border-collapse: collapse; font-size: 14px; margin: 14px 0; }
+  table.plain th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-faint); padding: 8px 12px; border-bottom: 1px solid var(--hairline); }
+  table.plain td { padding: 10px 12px; border-bottom: 1px solid var(--hairline); color: var(--ink-soft); vertical-align: top; }
+  table.plain tr:last-child td { border-bottom: none; }
+  .tbl-wrap { overflow-x: auto; }
+
+  ul.tight { margin: 0; padding-left: 20px; }
+  ul.tight li { margin-bottom: 9px; font-size: 14.5px; color: var(--ink-soft); }
+  ul.tight li strong { color: var(--ink); }
+  ul.tight li code { font-family: var(--mono); font-size: 12.5px; background: var(--paper-sunk); padding: 1px 5px; border-radius: 4px; }
+
+  code.inline { font-family: var(--mono); font-size: 12.8px; background: var(--paper-sunk); padding: 1px 5px; border-radius: 4px; color: var(--ink); }
+
+  .photo-note {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: var(--paper-sunk);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin: 10px 0;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+  }
+  .photo-note .tag { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; color: var(--accent); flex-shrink: 0; padding-top: 2px; }
+
+  footer.report-foot {
+    border-top: 1px solid var(--hairline);
+    margin-top: 60px;
+    padding-top: 24px;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+  }
+
+  @media (max-width: 880px) {
+    .layout { grid-template-columns: 1fr; }
+    nav.toc { position: static; height: auto; padding: 18px 20px; border-bottom: 1px solid var(--hairline); }
+    main { padding: 32px 20px 80px; }
+    .masthead h1 { font-size: 30px; }
+  }
+</style>
+
+<div class="layout">
+  <nav class="toc">
+    <div class="eyebrow">Contents</div>
+    <a href="#summary">Executive Summary</a>
+    <a href="#scorecard">Scorecard</a>
+    <a href="#critical">Critical Findings <span style="color:var(--critical)">(4)</span></a>
+    <a href="#high">High-Severity <span style="color:var(--high)">(19)</span></a>
+    <a href="#strengths">What They Got Right</a>
+    <a href="#ui">UI / Live Walkthrough</a>
+    <a href="#medium">Medium-Severity</a>
+    <a href="#scale">Scalability</a>
+    <a href="#testing">Testing &amp; Reliability</a>
+    <a href="#low">Low &amp; Nitpicks</a>
+    <a href="#recommend">Recommendations</a>
+    <a href="#method">Methodology</a>
+  </nav>
+
+  <main>
+    <div class="masthead">
+      <div class="kicker">Independent Technical Due Diligence</div>
+      <h1>HandyQuote — Code &amp; Architecture Audit</h1>
+      <div class="dek">A ground-up review of the AI-built (Grok) multi-tenant SaaS at quickhandyquote.com — security, data integrity, scalability, and product UX — read against the actual running application and source, not the builder's own notes.</div>
+      <div class="meta-row">
+        <span><strong>Repo</strong> almacncheese/handyman-invoicing</span>
+        <span><strong>Stack</strong> Next.js 16 · Prisma/Postgres · TypeScript</span>
+        <span><strong>Status</strong> Live, real trial signups</span>
+        <span><strong>Reviewed</strong> July 2026</span>
+      </div>
+    </div>
+
+    <section id="summary">
+      <h2 class="section-title">Executive Summary</h2>
+      <div class="prose">
+        <p>HandyQuote is a genuinely competent build — better, in several dimensions, than the average human-written MVP. Multi-tenant authorization is applied with unusual consistency across all 30+ API routes; money is modeled correctly as integer cents end-to-end; the public-facing e-signature link uses strong cryptographic tokens with no XSS surface anywhere; and the server/client component split shows real architectural judgment rather than the common "everything is a client component" anti-pattern. Al's engineering lessons clearly made it into this build: fail-closed secrets, tenant isolation via 404-not-403, atomic payment claims — the patterns are there, and mostly they hold up when we went and checked the actual code rather than trusting the builder's own notes about itself.</p>
+        <p>That said, this is not a codebase to hand paying customers' data to without changes. We found <strong>four critical-severity issues</strong>, the worst of which is a live, unscoped database-wipe script one environment-variable misconfiguration away from deleting every tenant's data — paired with the fact that <strong>no backup strategy exists at all.</strong> Two more critical bugs are genuine data-integrity races in the e-signature/status lifecycle: a signed, accepted estimate can be silently flipped back to "declined," and a voided estimate can be resurrected into a real invoice. For a product whose entire value proposition is "a legally meaningful customer signature," these are not cosmetic.</p>
+        <p>Nineteen high-severity findings round out the picture: rate limiting across every auth and public endpoint is trivially bypassed via a spoofed header; the manual-payment ledger can desync from the real invoice balance under concurrency; there's zero test coverage on any of the 34 API routes and zero CI; and the entire deployment is one VPS, one app container, one database container, with no replicas and no monitoring. None of this is unfixable — several of the fixes are single-file changes — but none of it should be discovered by a customer first.</p>
+      </div>
+      <div class="callout">
+        <p><strong>Bottom line:</strong> strong bones, real cracks. The security and multi-tenancy foundation is above average for an AI-built SaaS. The data-loss and data-integrity risks are not — and given the product is already live with real signups, we'd treat the four critical items as a stop-ship punch list, not a backlog.</p>
+      </div>
+    </section>
+
+    <section id="scorecard">
+      <h2 class="section-title">Scorecard</h2>
+      <p class="section-sub">Graded on what we could independently verify against the running code and app — not against the builder's own documentation, which we treated as a claim to check, not a fact.</p>
+      <div class="scorecard">
+        <div class="score-cell">
+          <div class="dim">Security</div>
+          <div class="grade g-b">B−</div>
+          <div class="note">Excellent tenant isolation &amp; crypto; undermined by spoofable rate limiting and a payment-ledger race.</div>
+        </div>
+        <div class="score-cell">
+          <div class="dim">Data Integrity</div>
+          <div class="grade g-d">D+</div>
+          <div class="note">Two live race conditions can corrupt e-signature status. One state machine, five reimplementations of it.</div>
+        </div>
+        <div class="score-cell">
+          <div class="dim">Data &amp; Backup</div>
+          <div class="grade g-d">D</div>
+          <div class="note">No backups anywhere. A single misconfigured env var runs a full tenant-wipe script.</div>
+        </div>
+        <div class="score-cell">
+          <div class="dim">Scalability</div>
+          <div class="grade g-c">C+</div>
+          <div class="note">Fine at current scale; unbounded queries and single-VPS topology are the first walls. Well-seamed for the fix.</div>
+        </div>
+        <div class="score-cell">
+          <div class="dim">Testing &amp; CI</div>
+          <div class="grade g-d">D+</div>
+          <div class="note">The tests that exist are genuinely rigorous. Zero route tests, zero e2e, zero CI.</div>
+        </div>
+        <div class="score-cell">
+          <div class="dim">UI / UX</div>
+          <div class="grade g-b">B</div>
+          <div class="note">Above-average design discipline and a real mobile-first pattern, with concrete, fixable gaps.</div>
+        </div>
+      </div>
+      <div class="stat-strip">
+        <div class="stat-chip crit"><span class="n">4</span><span class="l">critical</span></div>
+        <div class="stat-chip high"><span class="n">19</span><span class="l">high</span></div>
+        <div class="stat-chip med"><span class="n">31</span><span class="l">medium</span></div>
+        <div class="stat-chip low"><span class="n">32</span><span class="l">low / nitpick</span></div>
+        <div class="stat-chip strong"><span class="n">50</span><span class="l">strengths</span></div>
+      </div>
+    </section>
+
+    <section id="critical">
+      <h2 class="section-title">Critical Findings</h2>
+      <div class="section-sub">All four independently re-derived by us from the actual route code — not taken on the strength of the automated review alone. If we fix nothing else, fix these before onboarding another paying tenant.</div>
+
+      <div class="finding sev-critical">
+        <div class="finding-head">
+          <span class="badge sev-critical">Critical · Data Loss</span>
+          <h3>One unscoped seed script can wipe every tenant's data in production, and there is no backup to recover from</h3>
+        </div>
+        <p><code class="inline">prisma/seed.ts</code> gates a full-database wipe (<code class="inline">business.deleteMany()</code> cascading through users, customers, quotes, invoices, payments, activity) behind a single condition: <code class="inline">SEED_WIPE === '1' || NODE_ENV !== 'production'</code>. Today's Docker build correctly pins <code class="inline">NODE_ENV=production</code>, so the app is safe as currently deployed — but AGENT_NOTES.md's own history log already records one prior incident of exactly this kind of environment-config drift ("Init migration lagged product schema"). There is no soft-delete anywhere in the schema, no confirmation prompt, and no scoping by business id. And separately — <strong>we found no backup mechanism of any kind, anywhere</strong> — no pg_dump cron, no managed-Postgres snapshot, no offsite export. A single Docker volume on a single VPS is the only copy of every customer's estimates, signatures, and payment records that exists.</p>
+        <div class="evidence">prisma/seed.ts:21 — const wipe = SEED_WIPE === '1' || NODE_ENV !== 'production';
+...line 31 — await prisma.business.deleteMany();  // cascades everything
+docker-compose.yml — postgres_data is a local named volume; no backup service defined anywhere in the repo</div>
+        <p class="rec"><strong>Fix:</strong> scope the wipe to a specific demo business id/slug (never a global deleteMany), require an explicit CLI flag rather than an env-var default, add a <code class="inline">deletedAt</code> soft-delete column, and stand up an actual <code class="inline">pg_dump</code> schedule with offsite retention before treating this as safe for more paying tenants.</p>
+      </div>
+
+      <div class="finding sev-critical">
+        <div class="finding-head">
+          <span class="badge sev-critical">Critical · Data Integrity</span>
+          <h3>A customer's signed acceptance can be silently overwritten back to "declined"</h3>
+        </div>
+        <p>The accept endpoint correctly guards its write with a conditional update so two near-simultaneous requests can't clobber a signature. The decline endpoint does not: it reads status once, checks it, then writes <code class="inline">status: 'declined'</code> unconditionally with no re-check at write time. If an accept commits between decline's read and write — a double-click, a slow network retry — decline still fires, leaving a row that is simultaneously "declined" in status while carrying a fully signed <code class="inline">acceptedAt</code>/<code class="inline">signatureData</code>. For a product whose core value is a legally meaningful e-signature, a self-contradictory accepted-but-declined record is a real liability, not a UI glitch.</p>
+        <div class="evidence">src/app/api/public/estimate/[token]/decline/route.ts — plain prisma.quote.update(), no where-clause guard on current state
+vs. .../accept/route.ts — correctly uses updateMany({ where: { id, acceptedAt: null, signatureData: null } })</div>
+        <p class="rec"><strong>Fix:</strong> mirror the accept route's pattern exactly — a conditional <code class="inline">updateMany</code> guarded on <code class="inline">acceptedAt: null</code>, checking <code class="inline">result.count === 0</code> to detect a lost race.</p>
+      </div>
+
+      <div class="finding sev-critical">
+        <div class="finding-head">
+          <span class="badge sev-critical">Critical · Data Integrity</span>
+          <h3>A voided estimate can be resurrected into a real invoice</h3>
+        </div>
+        <p>The status model treats "void" as terminal — nothing should transition out of it. Voiding a quote, however, never clears its <code class="inline">acceptedAt</code> timestamp. The invoice-conversion route ignores the shared state machine entirely and instead checks <code class="inline">if (quote.acceptedAt &amp;&amp; status !== 'accepted' &amp;&amp; status !== 'invoiced')</code> — which is true for a quote that was accepted, then later voided. Calling convert on that quote id silently flips it back to "accepted" and proceeds to generate an invoice, completely bypassing the void terminal-state guarantee the rest of the codebase relies on.</p>
+        <div class="evidence">src/app/api/quotes/[id]/convert/route.ts — acceptedAt-based bypass, no canTransition() call, no check for status === 'void'
+src/app/api/quotes/[id]/void/route.ts — voiding never clears acceptedAt
+src/lib/quote-status.ts — canTransition() explicitly blocks every transition out of 'void'</div>
+        <p class="rec"><strong>Fix:</strong> have convert call the shared <code class="inline">assertTransition()</code> instead of its own acceptedAt heuristic, and/or clear <code class="inline">acceptedAt</code>/<code class="inline">signatureData</code> when a quote is voided.</p>
+      </div>
+
+      <div class="finding sev-critical">
+        <div class="finding-head">
+          <span class="badge sev-critical">Critical · Data Loss</span>
+          <h3>The database-wipe script has no scoping, no confirmation, and no per-tenant awareness</h3>
+        </div>
+        <p>Separately from the backup gap above, the wipe logic itself is worth flagging on its own terms: it is a single boolean env-var check standing between "reseed the demo account" and "delete every business that has ever signed up." There is no allowlist of environments, no dry-run, no confirmation, and no way to scope it to one tenant. This is exactly the class of environment-config mistake AGENT_NOTES.md's own history log already records happening once in this project (a migration lagging production schema) — the fix belongs in the script itself, independent of whatever backup story gets built.</p>
+        <div class="evidence">prisma/seed.ts:21-31 — single env-var branch gates an unscoped deleteMany() chain across Activity, Payment, Invoice, Quote, LineTemplate, Customer, User, Business</div>
+        <p class="rec"><strong>Fix:</strong> require an explicit <code class="inline">--i-mean-it</code>-style CLI flag (never an env-var default) to run the wipe branch at all, and scope every delete to a specific business id/slug rather than a bare <code class="inline">deleteMany()</code>.</p>
+      </div>
+    </section>
+
+    <section id="high">
+      <h2 class="section-title">High-Severity Findings</h2>
+      <div class="section-sub">Nineteen findings, grouped by area. Five of the six security-tagged items below were independently adversarially re-verified by a second pass of reviewers instructed to try to disprove them — all five survived.</div>
+
+      <div class="dim-heading">Security</div>
+
+      <div class="finding sev-high">
+        <div class="finding-head">
+          <span class="badge sev-high">High</span>
+          <span class="badge verdict">✓ verified</span>
+          <h3>Rate limiting on every auth endpoint is bypassed by spoofing one header</h3>
+        </div>
+        <p>Login, signup, forgot-password, reset-password, and change-password are all rate-limited — but the limiter's identity key is the client-supplied <code class="inline">X-Forwarded-For</code> header, taken verbatim with no trusted-proxy validation. Any caller can send a different fake IP on every request and reset their own bucket every time, fully defeating the limit. There's no secondary per-account backstop either.</p>
+        <div class="evidence">src/lib/rate-limit.ts — clientIp() returns the first comma-separated X-Forwarded-For value with no hop-count/allowlist check
+Used identically in all 5 auth routes: rateLimit({ key: 'login:'+ip, ... })</div>
+        <p class="rec"><strong>Fix:</strong> only trust X-Forwarded-For behind a known proxy, pick the correct trusted hop, and add a per-account limiter as a backstop independent of IP.</p>
+      </div>
+
+      <div class="finding sev-high">
+        <div class="finding-head">
+          <span class="badge sev-high">High</span>
+          <span class="badge verdict">✓ verified</span>
+          <h3>The public estimate link has the same spoofable limiter — and two of its three routes have no rate limit at all</h3>
+        </div>
+        <p>Only the accept endpoint calls the rate limiter; the GET lookup and the decline endpoint have none. The one limit that does exist is bypassable the same way as the auth endpoints. Given the token's 192-bit entropy this isn't a practical brute-force vector today, but it does mean unlimited unauthenticated reads and unlimited decline-spam against any token an attacker obtains through another channel.</p>
+        <div class="evidence">src/app/api/public/estimate/[token]/route.ts — no rate-limit import
+.../decline/route.ts — no rate-limit import
+.../accept/route.ts — the only one that calls rateLimit(), and it's spoofable per the finding above</div>
+        <p class="rec"><strong>Fix:</strong> add the same rate-limit call used on accept to decline and the GET lookup, once the underlying IP-spoofing issue is fixed.</p>
+      </div>
+
+      <div class="finding sev-high">
+        <div class="finding-head">
+          <span class="badge sev-high">High</span>
+          <h3>User.email has no global-unique constraint — a signup race can register two accounts under one email</h3>
+        </div>
+        <p>The only DB constraint is composite (<code class="inline">businessId, email</code>); email alone is just indexed. Signup does a check-then-create against a brand-new business id each time, so two concurrent signups with the same email both pass the pre-check and both succeed as separate tenants. Login then uses <code class="inline">findFirst</code> (not <code class="inline">findUnique</code>) on email alone, so it silently resolves to whichever row Postgres happens to return — the other account's owner may never reach their own workspace via that email again. The identical pattern exists in team invite and admin user creation.</p>
+        <div class="evidence">prisma/schema.prisma — @@unique([businessId, email]) only, no bare unique on email
+src/app/api/auth/signup/route.ts — findFirst check, then a separate transaction creating a new business + user with no re-check inside it</div>
+        <p class="rec"><strong>Fix:</strong> add a DB-level unique index on email alone, or re-check inside the signup transaction / catch the resulting constraint violation.</p>
+      </div>
+
+      <div class="finding sev-high">
+        <div class="finding-head">
+          <span class="badge sev-high">High</span>
+          <span class="badge verdict">✓ verified</span>
+          <h3>Manual payment recording can desync the invoice balance from the real payment ledger</h3>
+        </div>
+        <p>The idempotency key that's supposed to make payment recording safe against duplicate submissions is optional, and its only caller (the "Record cash/Zelle payment" button) never sends one — so a genuine double-click creates two distinct payment rows, not one deduplicated one. Separately, the balance update reads the invoice once, computes a new absolute value in application code, and writes it back with no row lock — two concurrent recordings against the same invoice can both read the same stale balance and each overwrite the other's update, so the Payment table can show two successful payments while the invoice's cached balance reflects only one.</p>
+        <div class="evidence">src/app/api/payments/record/route.ts — key falls back to a fresh random value when absent; balance write is a stale-read-then-absolute-write, not an atomic increment
+src/components/QuoteActions.tsx — recordOffline() never sends an idempotencyKey</div>
+        <p class="rec"><strong>Fix:</strong> generate the idempotency key client-side and persist it across retries; make the balance update an atomic conditional (increment, or SELECT ... FOR UPDATE) rather than a read-then-write.</p>
+      </div>
+
+      <div class="dim-heading">Data Model &amp; Business Logic</div>
+
+      <div class="finding sev-high">
+        <div class="finding-head">
+          <span class="badge sev-high">High</span>
+          <h3>The documented status state machine is enforced in exactly one route out of six</h3>
+        </div>
+        <p><code class="inline">quote-status.ts</code> is described in the project's own notes as "the" forward-only lifecycle gate. In the actual code it's imported by value in exactly one route (void). Every other status-mutating endpoint — the PATCH lock, accept, decline, send, and invoice conversion — reimplements its own hand-written status whitelist. None of these are cross-checked against each other, which is exactly how the two critical race-condition findings above happened: the shared, well-tested module gives false confidence about enforcement it doesn't actually provide everywhere.</p>
+        <div class="evidence">grep for imports of quote-status.ts across src/ → only void/route.ts (value import); every other route hand-writes its own status array</div>
+        <p class="rec"><strong>Fix:</strong> route every status write through the shared <code class="inline">assertTransition()</code> (or a wrapping <code class="inline">transitionQuote()</code> helper), deleting the duplicated inline arrays.</p>
+      </div>
+
+      <div class="finding sev-high">
+        <div class="finding-head">
+          <span class="badge sev-high">High</span>
+          <h3>Quote and invoice numbering are non-atomic read-then-write — racy under concurrent creation</h3>
+        </div>
+        <p>Both counters are read via a plain query, incremented in JavaScript, then written back as a literal value rather than a DB-level atomic increment. A unique constraint prevents a silently duplicated number, but the losing concurrent request just fails with an unhandled, confusing 400 rather than gracefully retrying — real risk any time two staff create estimates back-to-back or a request gets double-submitted.</p>
+        <div class="evidence">src/app/api/quotes/route.ts &amp; .../[id]/duplicate/route.ts — nextQuoteNumber + 1 computed in JS, written as a literal
+src/app/api/quotes/[id]/convert/route.ts — identical shape for invoice numbers</div>
+        <p class="rec"><strong>Fix:</strong> push the increment into the database itself (a raw <code class="inline">RETURNING</code> update, or Prisma's <code class="inline">{ increment: 1 }</code>) so concurrent transactions serialize correctly.</p>
+      </div>
+
+      <div class="finding sev-high">
+        <div class="finding-head">
+          <span class="badge sev-high">High</span>
+          <h3>Photo count/size limits exist in code but are never enforced on the write path</h3>
+        </div>
+        <p>Unlike line items — which are fully re-validated on every write — an 8-photo cap and a per-image size guard are defined but never called from the actual quote create/update API. Both routes accept a photos array with only shape validation and no length or size limit, then write it straight to the JSON column. A direct API call (bypassing the browser UI, which does enforce the cap client-side) can attach an unbounded number of arbitrarily large embedded images to a single quote row.</p>
+        <div class="evidence">src/lib/photos.ts — assertCanAddPhoto() defined, zero call sites anywhere in src/
+src/app/api/quotes/route.ts &amp; .../[id]/route.ts — photos Zod schema has no .max() on array length or string size</div>
+        <p class="rec"><strong>Fix:</strong> call the existing guard (or add matching Zod <code class="inline">.max()</code> constraints) inside the POST/PATCH handlers before persisting photos.</p>
+      </div>
+
+      <div class="dim-heading">Testing, CI &amp; Observability</div>
+
+      <div class="finding sev-high">
+        <div class="finding-head">
+          <span class="badge sev-high">High</span>
+          <h3>Zero route-level tests across all 34 API endpoints</h3>
+        </div>
+        <p>Every one of the 34 <code class="inline">route.ts</code> handlers — auth, payments, quotes, invoices, admin, the public e-signature endpoints — has no integration test at all. Only some of the pure library functions they call are tested in isolation; the actual request parsing, status mapping, and wiring between session/authz/db at the route boundary is entirely unverified.</p>
+        <div class="evidence">find src/app/api -name route.ts → 34 files; matching *.test.ts → 0</div>
+        <p class="rec"><strong>Fix:</strong> start with the highest-risk handlers — login, payment recording, the three public accept/decline/pay routes, and invoice conversion.</p>
+      </div>
+
+      <div class="finding sev-high">
+        <div class="finding-head">
+          <span class="badge sev-high">High</span>
+          <h3>No CI pipeline — tests and build checks are a manual, unenforced local step</h3>
+        </div>
+        <p>There is no <code class="inline">.github/workflows</code> directory or any other CI configuration. The only gate against shipping a broken build or a bad migration is a manual checklist bullet in the deploy notes ("npm test + npm run build"). Nothing stops a change that breaks the payment or authz logic from being pushed straight to the single production container.</p>
+        <div class="evidence">No .github/ directory anywhere in the repo; DEPLOY.md's "Redeploy" instructions are simply "push main (auto-deploy on)"</div>
+        <p class="rec"><strong>Fix:</strong> add a GitHub Actions workflow running test/typecheck/build on every push, gating the Coolify auto-deploy.</p>
+      </div>
+
+      <div class="finding sev-high">
+        <div class="finding-head">
+          <span class="badge sev-high">High</span>
+          <h3>No end-to-end test layer of any kind</h3>
+        </div>
+        <p>No Cypress, no Playwright, no e2e directory. The entire customer-facing surface — the quote builder, and critically the public accept/decline/pay flow real customers use to sign — has zero automated browser-level verification.</p>
+        <div class="evidence">package.json devDependencies — vitest only; no e2e/cypress/playwright directories anywhere</div>
+        <p class="rec"><strong>Fix:</strong> a small Playwright smoke suite covering login and the public accept/decline flow would cover the highest-value, least-tested surface first.</p>
+      </div>
+
+      <div class="finding sev-high">
+        <div class="finding-head">
+          <span class="badge sev-high">High</span>
+          <h3>No error-tracking SDK and almost no server-side error logging anywhere</h3>
+        </div>
+        <p>No Sentry/Datadog/OpenTelemetry or equivalent exists in the dependency tree. Of 47 files with a try/catch, 29 of the 30 API routes funnel every unexpected exception into a shared helper that converts it straight to a JSON response with zero console output. A full grep of the source tree found exactly two <code class="inline">console.error</code> calls total. A genuine production failure — a Prisma error, a DB blip — leaves no trace anywhere a human would see it.</p>
+        <div class="evidence">grep console.error src/ → 2 matches, both in email.ts; grep for Sentry/Datadog/etc in package.json → none</div>
+        <p class="rec"><strong>Fix:</strong> add a minimal error-tracking SDK, and log (not just relay) any exception that doesn't carry an explicit, intentional status code.</p>
+      </div>
+
+      <div class="finding sev-high">
+        <div class="finding-head">
+          <span class="badge sev-high">High</span>
+          <h3>No error boundary anywhere in the app — a component crash mid-estimate has no recovery screen</h3>
+        </div>
+        <p>Next.js's App Router supports a custom <code class="inline">error.tsx</code>/<code class="inline">global-error.tsx</code> at any route level. Neither exists anywhere in this app — only a 404 page. An uncaught render exception on any page (the quote builder mid-estimate, an invoice view) falls through to Next's bare default error handling, with no branded recovery screen and no "try again" affordance.</p>
+        <div class="evidence">find src/app -iname '*error*' → only not-found.tsx</div>
+        <p class="rec"><strong>Fix:</strong> add a root <code class="inline">global-error.tsx</code> and, for the quote builder specifically, a route-level <code class="inline">error.tsx</code> with a save-and-retry affordance.</p>
+      </div>
+
+      <div class="dim-heading">Scalability &amp; Operations</div>
+
+      <div class="finding sev-high">
+        <div class="finding-head">
+          <span class="badge sev-high">High</span>
+          <h3>No monitoring or alerting — the health check exists but nothing automated polls it</h3>
+        </div>
+        <p>The health endpoint is a real, DB-backed check (a genuinely good implementation), but nothing in the repo calls it on a schedule. The only caller is a manual smoke-test script a human runs by hand after a deploy. An outage, a crash-looping container, or a stuck migration would surface via a customer complaint before it surfaces any other way.</p>
+        <div class="evidence">src/app/api/health/route.ts — legitimate SELECT 1 check; no cron/CI/uptime-monitor caller anywhere in the repo</div>
+        <p class="rec"><strong>Fix:</strong> point an external uptime monitor (even a free one) at /api/health with alerting to a phone/Slack.</p>
+      </div>
+
+      <div class="finding sev-high">
+        <div class="finding-head">
+          <span class="badge sev-high">High</span>
+          <h3>Migrations run at container boot with no rollback plan — a bad migration takes the only production instance fully down</h3>
+        </div>
+        <p>The startup script runs <code class="inline">prisma migrate deploy</code> before starting the server, under <code class="inline">set -eu</code>. If a migration fails for any reason, the container never reaches "serving," and — since there's only one container — the app goes down with no automatic fallback and no documented rollback procedure. This exact failure mode (migration/schema drift) already happened once in this project per its own history log.</p>
+        <div class="evidence">scripts/docker-start.sh — set -eu; prisma migrate deploy; exec npm start
+No rollback/blue-green/canary procedure documented anywhere</div>
+        <p class="rec"><strong>Fix:</strong> at minimum, decouple migration from container boot (run it as a separate deploy step you can watch), and document a rollback procedure before the next schema change.</p>
+      </div>
+
+      <div class="finding sev-high">
+        <div class="finding-head">
+          <span class="badge sev-high">High</span>
+          <h3>Single VPS, single app container, single database container — no replicas, no resource limits, no failover</h3>
+        </div>
+        <p>The entire system runs on one box: one Coolify app, one Postgres container, one nginx edge, with no CPU/memory limits and no clustering. A crash, an OOM, or a reboot of that one box takes down the app and the database simultaneously. There's no load-test data in the repo, but the architecture points to Postgres round-trips as the first real ceiling, well before raw CPU.</p>
+        <div class="evidence">DEPLOY.md "Live topology" — one app, one DB, one nginx vhost, all on one VPS, no replica fields</div>
+        <p class="rec"><strong>Fix:</strong> see the scalability roadmap below — this isn't urgent at current traffic, but it's the wall the product will hit first as it grows.</p>
+      </div>
+
+      <div class="finding sev-high">
+        <div class="finding-head">
+          <span class="badge sev-high">High</span>
+          <h3>List endpoints and the dashboard have no pagination — data is silently truncated, not just slow</h3>
+        </div>
+        <p>No endpoint anywhere reads a skip/cursor/page parameter. Several routes hardcode a result cap with no way to reach older rows and no signal to the UI that anything is hidden. Two dashboard queries have no limit at all and pull every quote and invoice a tenant has ever created into Node just to sum a few numbers on every single page load — the endpoint every user sees first after login is also the one most likely to slow down as tenants accumulate history.</p>
+        <div class="evidence">src/app/dashboard/page.tsx — two unbounded findMany() calls run on every dashboard load
+GET /api/quotes, /api/invoices — hardcoded take:200 with no total-count signal or next-page mechanism</div>
+        <p class="rec"><strong>Fix:</strong> add real (cursor-based) pagination to the list endpoints, and replace the dashboard's unbounded fetch-then-reduce with a Postgres <code class="inline">aggregate</code>/<code class="inline">groupBy</code> so the database does the summing.</p>
+      </div>
+    </section>
+
+    <section id="strengths">
+      <h2 class="section-title">What They Got Right</h2>
+      <p class="section-sub">A due-diligence review that only lists problems isn't honest. Fifty distinct strengths were identified and independently checked against the code — here are the ones worth a client actually knowing about, because they're the reason the critical findings above are fixable bugs in a good foundation, not a foundation to rebuild.</p>
+
+      <div class="dim-heading">Security &amp; Multi-Tenancy</div>
+      <ul class="tight">
+        <li><strong>Tenant isolation is applied with real consistency across all 16 core business routes</strong> — fetch-by-id, then <code>assertSameBusiness()</code>, then act, every time, including in less-obvious spots like nested activity queries and invoice-sequence generation where it would have been easy to skip.</li>
+        <li><strong>Cross-tenant lookups correctly 404 instead of 403</strong>, deliberately avoiding an existence-leak — and this reasoning is applied uniformly, not just claimed in the docs.</li>
+        <li><strong>Sessions re-verify against the live database on every request</strong> rather than trusting the JWT's embedded claims, closing the common "demoted user's old token still has elevated access" bug class.</li>
+        <li><strong>The production auth secret genuinely fails closed</strong> — the app throws at boot if <code>AUTH_SECRET</code> is missing in production, with the insecure dev fallback reachable only outside production.</li>
+        <li><strong>Password reset tokens are textbook-correct</strong>: 256-bit random, hashed at rest, one-hour expiry, single-use, invalidated by a direct password change.</li>
+        <li><strong>Signup cannot self-assign platform-admin, role, or a foreign business id</strong> — traced every write path that could set the admin flag; only an existing admin can grant it.</li>
+        <li><strong>Zero <code>Math.random()</code> anywhere near a security-sensitive value</strong> — every real token uses <code>crypto.randomBytes</code>.</li>
+        <li><strong>The public e-signature token is 192 bits of real entropy</strong>, shape-guarded before any database query, with an opaque 404 either way.</li>
+        <li><strong>The public estimate response is a genuinely minimized field set</strong> — no internal notes, no other customers' data, no raw signature image, no business financial internals.</li>
+        <li><strong>Zero <code>dangerouslySetInnerHTML</code> anywhere in the codebase</strong> — every user-controlled string goes through React's default escaping; payment-app links are scheme-locked and URL-encoded.</li>
+        <li><strong>Card payments are genuinely, unconditionally disabled</strong> — the charge route is a 13-line stub that never touches the request, matching the product's own stated scope exactly.</li>
+        <li><strong>The middleware correctly limits itself to a UX redirect</strong>, explicitly documented as not being the authorization boundary — exactly the right mitigation for a well-known Next.js middleware-only-auth trap.</li>
+        <li><strong>The Docker image runs as a non-root user</strong> with a health check that actually queries Postgres rather than faking a 200.</li>
+        <li><strong>No secret values anywhere in the repo or git history</strong> — a full pattern sweep came back clean, and the team's own secrets-handling scripts consistently avoid printing values.</li>
+      </ul>
+
+      <div class="dim-heading">Money, Data Model &amp; API Design</div>
+      <ul class="tight">
+        <li><strong>Every monetary value is an integer cent, end to end</strong>, with no float arithmetic anywhere in the calculation chain — a detail many production apps still get wrong.</li>
+        <li><strong>Totals are always recomputed server-side</strong>; the create/update schemas don't even accept a client-submitted total field, so there's no path for a spoofed price.</li>
+        <li><strong>Payment idempotency is a real database unique constraint</strong>, not just an application-level check — a genuine key collision cannot double-credit, full stop.</li>
+        <li><strong>Cascade design on Quote/Invoice shows real referential-integrity thinking</strong>: an invoiced quote can't be deleted at the database level, and the app independently blocks deleting a customer who has quote history — belt and suspenders, not an accident.</li>
+        <li><strong>Zod validation is applied to literally every route that accepts a body</strong> — 19 out of 19, verified by cross-check, directly contradicting the usual "some routes trust raw JSON" concern.</li>
+        <li><strong>Zero <code>any</code> types, zero <code>@ts-ignore</code>, zero TODO/FIXME markers anywhere in the 34-route API layer</strong> under strict TypeScript — built to satisfy the compiler, not around it.</li>
+        <li><strong>Money-critical multi-table writes are correctly wrapped in real database transactions</strong> with in-transaction re-reads to guard against races — contrary to what you'd expect from a naive AI-generated app.</li>
+        <li><strong>No N+1 query patterns anywhere</strong> — relation data is consistently loaded via Prisma's include/select rather than looped per-row queries.</li>
+      </ul>
+
+      <div class="dim-heading">Frontend &amp; Product Craft</div>
+      <ul class="tight">
+        <li><strong>The server/client component split is genuinely deliberate</strong> — 18 of 20 pages are server components doing direct data fetches, with "use client" reserved for real interactive islands, avoiding the common "everything is a client component" AI-codebase smell.</li>
+        <li><strong>The e-signature pad uses native Pointer Events</strong>, correctly unifying mouse, touch, and pen input in one code path — exactly right for a product whose core moment happens on a customer's phone.</li>
+        <li><strong>Status badges never rely on color alone</strong> — the status word is always shown as visible text alongside the color dot.</li>
+        <li><strong>Focus states are handled correctly, not stripped</strong> — every place a default outline is removed, an explicit focus-visible ring replaces it.</li>
+        <li><strong>Email templates consistently escape every dynamic field</strong>, and every link is server-built from internal tokens, never from anything a user supplies.</li>
+        <li><strong>The mobile app shell uses a real bottom tab bar</strong>, not a squeezed-down desktop layout — a deliberate, correct mobile-first pattern (see our live walkthrough below).</li>
+      </ul>
+    </section>
+
+    <section id="ui">
+      <h2 class="section-title">UI / UX — Live Walkthrough Findings</h2>
+      <p class="section-sub">We didn't just read the frontend code — we ran the app locally, logged in as the demo account, and drove the full flow ourselves: created an estimate, sent it, opened the public link, drew a signature with synthetic pointer events, accepted, converted to an invoice, and recorded a manual payment, on both desktop (1280px) and mobile (375px) viewports.</p>
+
+      <div class="grid-2">
+        <div class="finding sev-strength">
+          <div class="finding-head"><span class="badge sev-strength">Confirmed live</span><h3>The full happy path works, end to end</h3></div>
+          <p>Login → build an estimate with live totals → send → open the public link → draw a signature → accept → convert to invoice → record a Zelle deposit. Every step produced the correct state change, the correct total ($135.31, $40.59 deposit, $94.72 balance after a $40.59 payment), and the correct UI update. This is a real, working product, not a demo shell.</p>
+        </div>
+        <div class="finding sev-medium">
+          <div class="finding-head"><span class="badge sev-medium">Live bug</span><h3>A real, measured layout overlap on desktop</h3></div>
+          <p>At the standard 1280px desktop width, the workspace's "Pro" plan badge overlaps the "Settings" nav link by 22 horizontal pixels, visually truncating the label. Confirmed with an actual DOM bounding-box measurement, not a visual guess — the top nav doesn't reserve enough width for all its items plus the plan badge at common laptop widths.</p>
+        </div>
+        <div class="finding sev-medium">
+          <div class="finding-head"><span class="badge sev-medium">Live bug</span><h3>Duplicate, redundant "Create" buttons on the estimate builder</h3></div>
+          <p>The new-estimate screen shows a "Create estimate" button in the right-hand summary panel <em>and</em> a separate sticky "Create" bar at the bottom of the viewport, simultaneously, on desktop. Both do the same thing. This reads as a mobile-only affordance that was never conditionally hidden above the mobile breakpoint.</p>
+        </div>
+        <div class="finding sev-medium">
+          <div class="finding-head"><span class="badge sev-medium">Live bug</span><h3>The price list is unreachable from mobile navigation entirely</h3></div>
+          <p>The mobile bottom tab bar covers Estimates/Invoices/Customers/Settings, and the Account dropdown adds Settings, Plan &amp; trial, Reports, and Sign out — but "Price list" (the saved materials/labor catalog, explicitly in-scope per the product contract) appears in neither. We confirmed the page itself works perfectly on mobile once reached directly by URL — it's purely a navigation-exposure gap, but a real one for a product whose entire pitch is "run your business from the truck."</p>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:18px;">
+        <p><strong>A methodology note on false positives:</strong> during this walkthrough our screenshot tooling twice produced content that looked like real bugs — a "hidden" signature form and what appeared to be a stale "PRO" badge floating over the wrong element — and both turned out to be artifacts of the screenshot capture itself, not the app. We verified every visual finding above against the live DOM (element geometry, computed styles, or an actual triggered network request) before including it. The three code-level frontend findings below survived that same bar.</p>
+      </div>
+
+      <div class="dim-heading" style="margin-top:26px;">From source review</div>
+      <div class="finding sev-medium">
+        <div class="finding-head"><span class="badge sev-medium">Medium</span><h3>The quote builder is a 660-line undecomposed component</h3></div>
+        <p>It's 2.2× the next-largest component in the app, mixing image compression, catalog fetching, pricing math, upload orchestration, and four panels of JSX in one file — directly at odds with the project's own stated "small components" decision, which was in fact followed everywhere else (every other component is 75–310 lines).</p>
+        <div class="evidence">src/components/QuoteBuilder.tsx — 660 lines; compressImage, persistPhotos, save, and four inline JSX panels all in one component</div>
+      </div>
+      <div class="finding sev-medium">
+        <div class="finding-head"><span class="badge sev-medium">Medium</span><h3>Form labels aren't programmatically linked to their inputs in 7 of 11 forms</h3></div>
+        <p>60+ labels across the customer, catalog, team, and settings forms rely purely on visual proximity, with no <code class="inline">htmlFor</code>/<code class="inline">id</code> pairing — even though the login form and admin console already do this correctly, showing the pattern was known, just not applied everywhere.</p>
+        <div class="evidence">grep &lt;label vs &lt;label htmlFor across the codebase — 60+ unlabeled vs. 11 correctly paired, all in AuthForm.tsx / AdminConsole.tsx</div>
+      </div>
+      <div class="finding sev-medium">
+        <div class="finding-head"><span class="badge sev-medium">Medium</span><h3>Merchant branding (logo, brand color) is collected and stored, but never actually rendered on the customer-facing estimate</h3></div>
+        <p>Settings lets a contractor set a brand color and logo URL, and both values are correctly threaded all the way to the public estimate page's props — but neither is ever used in the component's JSX. The public header background is hardcoded regardless. This is a sold customization feature that silently does nothing today.</p>
+        <div class="evidence">src/app/e/[token]/page.tsx passes primaryColor/logoUrl into PublicEstimate; grep for either inside PublicEstimate.tsx only matches the type declaration</div>
+      </div>
+    </section>
+
+    <section id="medium">
+      <h2 class="section-title">Medium-Severity Findings</h2>
+      <p class="section-sub">Thirty-one findings at this level in total; the ones below are the ones we'd actually schedule work against. The rest are smaller, mostly-cosmetic variants of the same themes.</p>
+
+      <div class="grid-2">
+        <div class="finding sev-medium">
+          <div class="finding-head"><span class="badge sev-medium">Medium</span><h3>No session revocation on logout or password change</h3></div>
+          <p>Sessions are stateless 14-day JWTs. Logging out only clears the cookie client-side — a previously issued token (stolen device, leaked browser cache) stays fully valid elsewhere for its full remaining life.</p>
+        </div>
+        <div class="finding sev-medium">
+          <div class="finding-head"><span class="badge sev-medium">Medium</span><h3>The real platform-admin account defaults to a hardcoded weak password</h3></div>
+          <p>The script that provisions the actual production superadmin falls back to the literal string <code class="inline">password1</code> with no production guard, unlike the (correctly fail-closed) auth secret — and a companion script's own comments suggest this fallback has actually been relied on operationally.</p>
+        </div>
+        <div class="finding sev-medium">
+          <div class="finding-head"><span class="badge sev-medium">Medium</span><h3>Photo uploads trust the client-declared file type for the stored Content-Type header</h3></div>
+          <p>An <code class="inline">image/svg+xml</code> upload is accepted and stored with that exact Content-Type under a <code class="inline">.jpg</code>-suffixed key — if that object URL is ever opened directly rather than embedded, a browser would render it as SVG and execute any embedded script.</p>
+        </div>
+        <div class="finding sev-medium">
+          <div class="finding-head"><span class="badge sev-medium">Medium</span><h3>The audit trail never records IP address or user agent</h3></div>
+          <p>Not even on the "customer accepted" entry that matters most for a signature dispute — despite the accept route already computing the client IP a few lines away for its rate limiter.</p>
+        </div>
+        <div class="finding sev-medium">
+          <div class="finding-head"><span class="badge sev-medium">Medium</span><h3>The activity log silently swallows every write failure</h3></div>
+          <p>A systemic audit-log outage would be completely invisible — every quote action would keep appearing to succeed while the audit trail quietly goes blank, with no log line anywhere.</p>
+        </div>
+        <div class="finding sev-medium">
+          <div class="finding-head"><span class="badge sev-medium">Medium</span><h3>Two dashboard-critical list queries sort by a column with no matching index</h3></div>
+          <p>Quotes and invoices both list by "most recently updated/created," but the schema's indexes don't cover that sort key — invisible today, a real cost as tenant history grows.</p>
+        </div>
+        <div class="finding sev-medium">
+          <div class="finding-head"><span class="badge sev-medium">Medium</span><h3>Migration history has already drifted from the schema file</h3></div>
+          <p>Four columns created in the very first migration were never dropped and don't exist on the current model — harmless today only because the app never reads them, but a landmine for the next schema change.</p>
+        </div>
+        <div class="finding sev-medium">
+          <div class="finding-head"><span class="badge sev-medium">Medium</span><h3>Every authenticated request re-verifies identity against Postgres</h3></div>
+          <p>A correct-for-safety design choice, but it means read traffic generates the same database load as writes — combined with the single, un-pooled Postgres container, this is the most likely first thing to saturate under real concurrent load.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="scale">
+      <h2 class="section-title">Scalability &amp; Path to Scale</h2>
+      <p class="section-sub">The good news first: sessions are stateless JWTs (no shared session store needed to add app replicas), and the rate limiter is cleanly seamed behind a two-function interface used identically everywhere — swapping it for Redis is a single-file change, not a rewrite. The architecture doesn't hit one dramatic wall so much as it currently stacks every kind of load — reads, writes, and identity checks — onto one shared, unpooled Postgres container on one VPS with no second instance of anything.</p>
+
+      <div class="roadmap">
+        <div class="road-step">
+          <div class="when">Before more customers</div>
+          <h4>Close the data-loss gap</h4>
+          <p>Stand up a real <code class="inline">pg_dump</code> schedule with offsite retention, and fix the seed script's wipe guard. This is the one item on this entire report we'd treat as non-negotiable before onboarding another paying tenant.</p>
+        </div>
+        <div class="road-step">
+          <div class="when">Next</div>
+          <h4>Add real pagination and push aggregation into SQL</h4>
+          <p>The dashboard and reports pages currently pull a tenant's entire history into Node on every load. This is invisible at today's scale and will be the first thing a growing tenant notices.</p>
+        </div>
+        <div class="road-step">
+          <div class="when">Before a second replica</div>
+          <h4>Move rate limiting off in-process memory and set a connection pool size</h4>
+          <p>Both are currently correct for exactly one app instance. Adding a second replica without doing this first would silently double-count nothing on rate limits and risk exhausting Postgres's connection limit.</p>
+        </div>
+        <div class="road-step">
+          <div class="when">When it matters</div>
+          <h4>Decouple migrations from container boot; add a managed/pooled Postgres</h4>
+          <p>The harder, genuinely architectural work — worth doing before the single-VPS topology becomes the thing standing between the product and its next tier of customers.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="testing">
+      <h2 class="section-title">Testing &amp; Reliability, Summarized</h2>
+      <div class="tbl-wrap">
+        <table class="plain">
+          <tr><th>Layer</th><th>Coverage</th><th>Quality of what exists</th></tr>
+          <tr><td>Library functions (<code class="inline">src/lib</code>)</td><td>10 of 23 files (43%)</td><td>Genuinely rigorous — real negative and boundary cases, not happy-path-only</td></tr>
+          <tr><td>API routes (34 files)</td><td>0%</td><td>—</td></tr>
+          <tr><td>End-to-end / browser</td><td>0%</td><td>No framework installed</td></tr>
+          <tr><td>CI enforcement</td><td>None</td><td>"Run tests before deploy" is a manual checklist line, not automation</td></tr>
+        </table>
+      </div>
+      <p>The project's own test plan document promised route-handler tests, a dedicated payments test suite, 80% coverage on money-critical modules, and CI — none of which exist today, and the 80% figure can't currently be measured since no coverage tool is installed at all.</p>
+    </section>
+
+    <section id="low">
+      <h2 class="section-title">Low-Severity &amp; Nitpicks</h2>
+      <p class="section-sub">Thirty-two smaller items, condensed. None of these are urgent on their own.</p>
+      <ul class="tight">
+        <li>Login's response timing is measurably slower for a registered email (bcrypt only runs on a match) — a minor account-enumeration signal, though signup's own error message already discloses the same thing more directly.</li>
+        <li>Uncaught exceptions return the raw internal error message to the caller, including on public, unauthenticated routes — an information-hygiene gap, not an authorization bypass.</li>
+        <li>The security-critical session, token, and password-reset modules have no unit tests of their own, unlike the tenant-isolation and rate-limit modules.</li>
+        <li>One doc claims a timing-safe token comparison that isn't actually implemented — low-risk in practice given the token's entropy, but a documentation/reality mismatch worth correcting.</li>
+        <li>A genuine idempotent-retry race on payment recording gets a raw error instead of the intended "already recorded" replay response.</li>
+        <li>A moderate advisory exists in a dependency Next.js bundles internally — not fixable from this project's own package.json.</li>
+        <li>No Content-Security-Policy or Strict-Transport-Security header is set at the application layer (may be handled at the reverse proxy, which isn't part of this repo).</li>
+        <li>Currency is effectively hardcoded to USD — reasonable for a US-only MVP, but a real migration if multi-currency is ever needed.</li>
+        <li>The reports endpoint loads full quote/invoice/payment history per request with no date bound — fine at today's per-tenant scale, a real cost later.</li>
+        <li>Several confirm/delete actions use the browser's native <code class="inline">confirm()</code>/<code class="inline">prompt()</code> dialogs, breaking the app's otherwise consistent design language.</li>
+        <li>A handful of photo-remove buttons share an identical, non-differentiating accessible name for screen-reader users.</li>
+        <li>The signature canvas has no keyboard-accessible path — a real gap for the one action in the product that's legally meaningful.</li>
+      </ul>
+    </section>
+
+    <section id="recommend">
+      <h2 class="section-title">Recommendations, in Priority Order</h2>
+      <div class="tbl-wrap">
+      <table class="plain">
+        <tr><th>Priority</th><th>Action</th><th>Why</th></tr>
+        <tr><td><span class="badge sev-critical">Now</span></td><td>Stand up automated Postgres backups; fix the seed script's wipe guard</td><td>The only finding in this report with irreversible, total-loss consequences</td></tr>
+        <tr><td><span class="badge sev-critical">Now</span></td><td>Fix the decline-vs-accept race and the void-resurrection bug</td><td>Both directly corrupt the e-signature record this product's entire value rests on</td></tr>
+        <tr><td><span class="badge sev-high">Soon</span></td><td>Fix IP-spoofable rate limiting across auth and the public estimate routes</td><td>Currently the single most consequential security gap, and a small, contained fix</td></tr>
+        <tr><td><span class="badge sev-high">Soon</span></td><td>Make payment recording's balance update atomic; wire a real idempotency key from the client</td><td>Prevents the payment ledger from silently drifting from reality</td></tr>
+        <tr><td><span class="badge sev-high">Soon</span></td><td>Route every status transition through the one shared state machine</td><td>Removes the root cause behind both critical data-integrity bugs, not just their symptoms</td></tr>
+        <tr><td><span class="badge sev-medium">Next</span></td><td>Add CI (test + typecheck + build) gating deploy, and at least route-level tests for auth/payments/public-estimate</td><td>Nothing currently stops a broken change from reaching the single production container</td></tr>
+        <tr><td><span class="badge sev-medium">Next</span></td><td>Add pagination to list endpoints; push dashboard/report aggregation into SQL</td><td>The first thing a growing tenant will actually notice</td></tr>
+        <tr><td><span class="badge sev-low">Later</span></td><td>Decompose the quote builder; fix form-label associations; render the brand-color/logo feature that's already being sold</td><td>Real, but lower-stakes polish</td></tr>
+      </table>
+      </div>
+    </section>
+
+    <section id="method">
+      <h2 class="section-title">Methodology</h2>
+      <div class="prose">
+        <p>This audit combined an automated multi-reviewer pass with direct manual verification, on the principle that an AI-authored codebase's own documentation about itself (AGENT_NOTES.md, DECISIONS.md, PRODUCT_CONTRACT.md) is a claim to check, not a fact to inherit — several findings above exist specifically because a documented claim didn't match the code we actually read.</p>
+        <p><strong>Static review:</strong> fourteen independent specialist passes covered authentication/session security, multi-tenant authorization (split across two passes covering all 30 API routes), payment and money-handling correctness, the public unauthenticated surface, secrets/deployment/dependency posture, API-layer consistency, the business-logic/domain layer, frontend component architecture, schema design, query and scaling patterns, infrastructure/deployment maturity, test coverage, and observability. Every finding required a specific file and line as evidence, not a general impression.</p>
+        <p><strong>Adversarial verification:</strong> every finding rated critical or high from the security-focused passes was independently re-reviewed by two additional reviewers instructed to actively try to disprove it by re-reading the cited code themselves. All five that reached this stage survived. The four critical findings from other passes (which weren't part of that specific pipeline) were instead personally re-derived and traced end-to-end through the actual route code by the lead reviewer before being included here.</p>
+        <p><strong>Live verification:</strong> we additionally stood up the application locally — a real Postgres database, a seeded demo workspace, the actual dev server — and drove the complete customer journey ourselves in both desktop and mobile viewports: account login, estimate creation with live total calculation, sending, opening the public link, drawing a signature with the real pointer-event pipeline, accepting, converting to an invoice, and recording a manual payment. Two apparent visual bugs surfaced during this process and were discarded after confirming, via direct DOM inspection, that they were artifacts of our own screenshot tooling rather than the application.</p>
+      </div>
+      <footer class="report-foot">
+        Independent review of the handyman-invoicing / HandyQuote codebase, prepared for Al Smith. All findings are anchored to specific files and line ranges in the repository as reviewed; line numbers may shift with subsequent commits.
+      </footer>
+    </section>
+  </main>
+</div>
