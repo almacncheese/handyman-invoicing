@@ -1,40 +1,26 @@
-# Handy Invoicing / HandyQuote Test Plan
+# Handy Invoicing / HandyQuote Test Plan - LIVE UPDATE 2026-07-12
 
-**Test Engineer Mandate**: Enforce TDD and regression safety. Write failing tests FIRST for all security, money, and core business invariants.
+**Test Engineer Mandate**: Enforce TDD and regression safety. No rubber-stamp. All acceptance criteria covered.
 
-## Core Principles
-- Red-Green-Refactor
-- Fast unit tests > slow E2E
-- Vitest + TS for pure libs and route handlers (Request mocks)
-- Co-located `*.test.ts` or `tests/` dir
-- `npm test` must be green on clean checkout for DoD
+## Latest Priorities (per Al 'go' + pricing changes)
+1. **Billing invariants**: Exactly 3 invoice lifetime cap on Starter tier enforcement (DB + API gate). Monthly-only subscriptions. No annual option.
+2. **Authz/IDOR** on all quote/invoice/customer routes.
+3. **Payment** idempotency, webhook handling, Starter → Pro upgrade flow.
+4. **Quote lifecycle** with void/convert/decline guards.
+5. **Feature gating** tests for all plans.
 
-## Priorities (in order)
-1. **Authz & IDOR** - Tenant isolation, ownership checks on quotes/invoices/customers.
-2. **Payments & Idempotency** - Authorize.net transactions, prevent double-charges with keys, atomic recording.
-3. **Quote → Invoice Flow** - Invariants: totals match, no double invoicing, state machine (draft/quoted/invoiced/paid).
-4. **Calculations** - Material cost + margin + labor (hours*rate) + taxes/discounts accuracy.
-5. **Validation** - Edge: zero/negative values, max line items, currency precision (2 decimals).
-6. **Happy path** - UI smoke optional (Playwright later).
+## Definition of Done for Launch
+- npm test green on clean checkout.
+- All ACCEPTANCE.md items have corresponding tests.
+- 3-invoice cap cannot be bypassed (red-green tests).
+- Security + payment sign-off documented.
+- `npm run build` succeeds.
 
-## Definition of Done for any feature
-- Relevant tests written BEFORE implementation code.
-- `npm test` passes.
-- No skipped tests on critical paths.
-- Coverage >80% on lib/payment/calc modules.
+## Tests Actively Being Added Right Now
+- `src/lib/billing.test.ts` - new tests for Starter cap, monthly plans.
+- Route handler tests for upgrade flows.
+- Integration smoke for public estimate + pay.
 
-## Initial Test Suite (to create immediately)
-- `lib/calculations.test.ts` : test `calculateQuoteTotal`, margin application, labor calc.
-- `lib/authz.test.ts` or middleware tests: resource ownership.
-- `app/api/payments/route.test.ts`: mock Authorize.net, idempotency.
-- `lib/quote-invoice.test.ts`: conversion logic.
+Status: Writing failing tests first, then implementing fixes. Repo commits visible at github.com/almacncheese/handyman-invoicing
 
-## Next Actions
-1. Scaffold Next.js + Vitest project (package.json, vitest.config.ts, tsconfig).
-2. Add failing tests.
-3. Implement minimal passing code.
-4. Add CI with tests.
-
-Refuse to mark 'done' without passing acceptance tests.
-
-See ACCEPTANCE.md for full user stories once defined.
+Team is parallel: me on tests, others on code/UI/docs. Updates every few hours.

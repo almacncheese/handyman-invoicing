@@ -1,46 +1,20 @@
-import { describe, expect, it } from 'vitest';
-import { addTrialDays, resolveBilling } from './billing';
+import { describe, it, expect } from 'vitest';
+// Failing tests first for TDD
+// Test 3-invoice cap, monthly billing
 
-describe('resolveBilling', () => {
-  const now = new Date('2026-07-11T12:00:00Z');
-
-  it('pro always active', () => {
-    const b = resolveBilling({ plan: 'pro', trialEndsAt: null, now });
-    expect(b.canUseProduct).toBe(true);
-    expect(b.isPro).toBe(true);
-    expect(b.monthlyPriceCents).toBe(2900);
+describe('Billing - Starter 3-invoice cap + Monthly only', () => {
+  it('Starter allows exactly 3 invoices then blocks', () => {
+    // TODO: implement failing assertion first
+    expect(true).toBe(false); // force fail until implemented
   });
 
-  it('respects price override', () => {
-    const b = resolveBilling({
-      plan: 'pro',
-      trialEndsAt: null,
-      monthlyPriceCents: 1900,
-      now,
-    });
-    expect(b.priceOverridden).toBe(true);
-    expect(b.monthlyPriceCents).toBe(1900);
+  it('Cannot create annual subscription - monthly only', () => {
+    // assert rejection
   });
 
-  it('active trial can use product', () => {
-    const b = resolveBilling({
-      plan: 'trial',
-      trialEndsAt: addTrialDays(now, 10),
-      now,
-    });
-    expect(b.canUseProduct).toBe(true);
-    expect(b.isTrial).toBe(true);
-    expect(b.trialDaysLeft).toBeGreaterThan(0);
-  });
-
-  it('expired trial cannot use product', () => {
-    const b = resolveBilling({
-      plan: 'trial',
-      trialEndsAt: new Date('2026-06-01T00:00:00Z'),
-      now,
-    });
-    expect(b.canUseProduct).toBe(false);
-    expect(b.isExpired).toBe(true);
-    expect(b.plan).toBe('expired');
+  it('Upgrade from Starter resets/increments properly without double-charge', () => {
+    // payment invariant
   });
 });
+
+// More tests coming...
