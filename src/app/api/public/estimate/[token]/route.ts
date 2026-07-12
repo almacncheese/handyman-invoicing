@@ -2,11 +2,21 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
 import { isValidPublicToken } from '@/lib/authz';
 import { jsonError, jsonOk, errorFromException } from '@/lib/http';
+import { clientIp, rateLimit } from '@/lib/rate-limit';
 
 type Ctx = { params: Promise<{ token: string }> };
 
-export async function GET(_req: NextRequest, ctx: Ctx) {
+export async function GET(req: NextRequest, ctx: Ctx) {
   try {
+    const limited = rateLimit({
+      key: `public-get:${clientIp(req)}`,
+      limit: 120,
+      windowMs: 15 * 60_000,
+    });
+    if (!limited.ok) {
+      return jsonError('Too many requests — try again later', 429);
+    }
+
     const { token } = await ctx.params;
     if (!isValidPublicToken(token)) {
       return jsonError('Not found', 404);

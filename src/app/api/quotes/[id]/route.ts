@@ -11,6 +11,16 @@ import {
   type LooseLineInput,
 } from '@/lib/calculations';
 import { jsonError, jsonOk, errorFromException } from '@/lib/http';
+import { preparePhotosForWrite, PhotoValidationError } from '@/lib/photos';
+
+const photoSchema = z.object({
+  id: z.string(),
+  dataUrl: z.string().optional(),
+  url: z.string().optional(),
+  key: z.string().optional(),
+  caption: z.string().optional(),
+  createdAt: z.string().optional(),
+});
 
 const patchSchema = z.object({
   title: z.string().max(200).optional(),
@@ -22,16 +32,7 @@ const patchSchema = z.object({
   taxPercent: z.number().min(0).max(100).optional(),
   depositPercent: z.number().min(0).max(100).optional(),
   lineItems: z.array(z.record(z.unknown())).optional(),
-  photos: z
-    .array(
-      z.object({
-        id: z.string(),
-        dataUrl: z.string(),
-        caption: z.string().optional(),
-        createdAt: z.string().optional(),
-      }),
-    )
-    .optional(),
+  photos: z.array(photoSchema).optional(),
 });
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -89,6 +90,16 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       depositPercent,
     });
 
+    let photosWrite: Prisma.InputJsonValue | undefined;
+    if (body.photos !== undefined) {
+      try {
+        photosWrite = preparePhotosForWrite(body.photos) as unknown as Prisma.InputJsonValue;
+      } catch (e) {
+        if (e instanceof PhotoValidationError) return jsonError(e.message, 422);
+        throw e;
+      }
+    }
+
     const quote = await prisma.quote.update({
       where: { id },
       data: {
@@ -102,10 +113,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
         taxPercent,
         depositPercent,
         lineItems: lineItems as Prisma.InputJsonValue,
-        photos:
-          body.photos === undefined
-            ? undefined
-            : (body.photos as unknown as Prisma.InputJsonValue),
+        photos: photosWrite,
         subtotalCents: totals.subtotalCents,
         taxCents: totals.taxCents,
         totalCents: totals.totalCents,

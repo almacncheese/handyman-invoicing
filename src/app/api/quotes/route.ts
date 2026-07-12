@@ -12,6 +12,7 @@ import { allocateQuoteNumber } from '@/lib/quote-numbers';
 import { logActivity } from '@/lib/activity';
 import { jsonError, jsonOk, errorFromException } from '@/lib/http';
 import { parsePagination, pageMeta } from '@/lib/pagination';
+import { preparePhotosForWrite, PhotoValidationError } from '@/lib/photos';
 import { Prisma } from '@prisma/client';
 
 const lineSchema = z.object({
@@ -28,6 +29,15 @@ const lineSchema = z.object({
   qty: z.number().optional(),
 });
 
+const photoSchema = z.object({
+  id: z.string(),
+  dataUrl: z.string().optional(),
+  url: z.string().optional(),
+  key: z.string().optional(),
+  caption: z.string().optional(),
+  createdAt: z.string().optional(),
+});
+
 const createSchema = z.object({
   title: z.string().max(200).optional(),
   jobType: z.string().max(40).optional().nullable(),
@@ -39,16 +49,7 @@ const createSchema = z.object({
   depositPercent: z.number().min(0).max(100).optional(),
   validDays: z.number().int().min(1).max(365).optional(),
   lineItems: z.array(lineSchema).default([]),
-  photos: z
-    .array(
-      z.object({
-        id: z.string(),
-        dataUrl: z.string(),
-        caption: z.string().optional(),
-        createdAt: z.string().optional(),
-      }),
-    )
-    .optional(),
+  photos: z.array(photoSchema).optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -111,6 +112,14 @@ export async function POST(req: NextRequest) {
       throw e;
     }
 
+    let photos;
+    try {
+      photos = preparePhotosForWrite(body.photos || []);
+    } catch (e) {
+      if (e instanceof PhotoValidationError) return jsonError(e.message, 422);
+      throw e;
+    }
+
     const quote = await prisma.$transaction(async (tx) => {
       const business = await tx.business.findUniqueOrThrow({
         where: { id: session.businessId },
@@ -139,7 +148,7 @@ export async function POST(req: NextRequest) {
           taxPercent,
           depositPercent,
           lineItems: lines as unknown as Prisma.InputJsonValue,
-          photos: (body.photos || []) as unknown as Prisma.InputJsonValue,
+          photos: photos as unknown as Prisma.InputJsonValue,
           subtotalCents: totals.subtotalCents,
           taxCents: totals.taxCents,
           totalCents: totals.totalCents,

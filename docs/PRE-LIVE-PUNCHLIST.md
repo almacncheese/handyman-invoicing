@@ -28,8 +28,12 @@ Portfolio gate: `~/dev/_PRE-LIVE-GATE.md`.
 - [x] List pagination (`page` meta) on quotes / invoices / customers
 - [x] GitHub Actions CI (`npm test` + typecheck + build)
 - [x] Backup script + **VPS cron installed** (`/opt/handyquote-backup.sh`, 03:15 UTC); optional off-box rclone
+- [x] Photo count/size guards enforced on quote write + upload (`preparePhotosForWrite`)
+- [x] Public estimate GET rate-limited
+- [x] `error.tsx` + `global-error.tsx` recovery UI
 - [ ] Full route-level integration tests (lib tests + CI cover criticals; e2e still thin)
 - [ ] Card deposits + Pro Stripe checkout (product-deferred; charge remains 501)
+- [ ] Third-party error tracking SDK (Sentry etc.) — console structured log only for now
 
 ## Strengths to preserve
 
