@@ -4,6 +4,7 @@ import { resolveBilling } from '@/lib/billing';
 import { prisma } from '@/lib/db';
 import { AppShell } from '@/components/AppShell';
 import { SettingsForm } from '@/components/SettingsForm';
+import { PaymentGatewaySettings } from '@/components/PaymentGatewaySettings';
 import { TeamManager } from '@/components/TeamManager';
 import { ChangePasswordForm } from '@/components/ChangePasswordForm';
 import Link from 'next/link';
@@ -55,6 +56,10 @@ export default async function SettingsPage() {
           venmoHandle: business.venmoHandle || '',
         }}
       />
+      <div className="mt-10">
+        <PaymentGatewaySettings readOnly={session.role !== 'owner'} />
+      </div>
+
       <div className="mt-10">
         <div className="page-header !mb-4">
           <div>

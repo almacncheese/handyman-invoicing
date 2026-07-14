@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { isValidPublicToken } from '@/lib/authz';
 import { jsonError, jsonOk, errorFromException } from '@/lib/http';
 import { clientIp, rateLimit } from '@/lib/rate-limit';
+import { publicGatewayConfig } from '@/lib/gateway-config';
 
 type Ctx = { params: Promise<{ token: string }> };
 
@@ -25,8 +26,9 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     const quote = await prisma.quote.findUnique({
       where: { publicToken: token },
       include: {
-        business: true,
+        business: { include: { paymentGatewayConfig: true } },
         customer: true,
+        invoice: { select: { status: true, amountDueCents: true } },
       },
     });
 
@@ -60,6 +62,13 @@ export async function GET(req: NextRequest, ctx: Ctx) {
       }
     }
 
+    const locked = status === 'accepted' || status === 'invoiced' || status === 'paid';
+    const balanceDueCents = quote.invoice ? quote.invoice.amountDueCents : quote.depositCents;
+    const payment =
+      locked && quote.invoice?.status !== 'void' && balanceDueCents > 0
+        ? { gatewayConfig: publicGatewayConfig(quote.business.paymentGatewayConfig), balanceDueCents }
+        : null;
+
     return jsonOk({
       estimate: {
         id: quote.id,
@@ -77,6 +86,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
         acceptedAt: quote.acceptedAt,
         signedName: quote.signedName,
         hasSignature: Boolean(quote.signatureData),
+        payment,
         customer: quote.customer
           ? { name: quote.customer.name }
           : null,

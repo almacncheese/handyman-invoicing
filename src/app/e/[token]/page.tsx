@@ -5,6 +5,7 @@ import { PublicEstimate } from '@/components/PublicEstimate';
 import { buildPaymentLinks } from '@/lib/payment-links';
 import { normalizePhotos } from '@/lib/photos';
 import { logActivity } from '@/lib/activity';
+import { publicGatewayConfig } from '@/lib/gateway-config';
 
 type Props = { params: Promise<{ token: string }> };
 
@@ -15,8 +16,9 @@ export default async function PublicEstimatePage({ params }: Props) {
   const quote = await prisma.quote.findUnique({
     where: { publicToken: token },
     include: {
-      business: true,
+      business: { include: { paymentGatewayConfig: true } },
       customer: true,
+      invoice: { select: { status: true, amountDueCents: true } },
     },
   });
   if (!quote || quote.status === 'void') notFound();
@@ -46,6 +48,14 @@ export default async function PublicEstimatePage({ params }: Props) {
     quote.depositCents,
   );
 
+  const displayStatus = quote.status === 'sent' && !quote.viewedAt ? 'viewed' : quote.status;
+  const locked = displayStatus === 'accepted' || displayStatus === 'invoiced' || displayStatus === 'paid';
+  const balanceDueCents = quote.invoice ? quote.invoice.amountDueCents : quote.depositCents;
+  const payment =
+    locked && quote.invoice?.status !== 'void' && balanceDueCents > 0
+      ? { gatewayConfig: publicGatewayConfig(quote.business.paymentGatewayConfig), balanceDueCents }
+      : null;
+
   return (
     <PublicEstimate
       token={token}
@@ -53,7 +63,7 @@ export default async function PublicEstimatePage({ params }: Props) {
         title: quote.title,
         number: quote.number,
         jobType: quote.jobType,
-        status: quote.status === 'sent' && !quote.viewedAt ? 'viewed' : quote.status,
+        status: displayStatus,
         lineItems: quote.lineItems as never,
         photos: normalizePhotos(quote.photos),
         subtotalCents: quote.subtotalCents,
@@ -71,6 +81,7 @@ export default async function PublicEstimatePage({ params }: Props) {
         hasSignature: Boolean(quote.signatureData),
         declined: quote.status === 'declined',
         paymentLinks,
+        payment,
         customer: quote.customer ? { name: quote.customer.name } : null,
         business: {
           name: quote.business.name,

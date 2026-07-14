@@ -11,8 +11,7 @@
 | Jest | **Vitest** | Existing red test already imports vitest; faster TS unit tests |
 | Float dollars | **Integer cents** | Avoid float money bugs; display layer formats |
 | shadcn full kit day 1 | **Minimal Tailwind + small components** | Ship the flow first; add component library when UI stabilizes |
-| Authorize.net only | **Provider interface + mock + AuthNet sandbox** | Local/tests run without keys; real AuthNet when `AUTHORIZE_NET_*` set. Field-order lessons from ffl-core ENGINEERING-NOTES |
-| Stripe instead | **No for MVP** | Product brief and Al’s FFL stack already center on AuthNet; can add Stripe later behind same `PaymentProvider` |
+| Authorize.net only | **Superseded (2026-07-14)** | Original MVP call, built as single-tenant/platform-wide credentials. Al clarified he has no AuthNet account himself — contractors each bring their own merchant account. Now per-tenant: `PaymentGatewayConfig` (one per Business, encrypted secret), contractor picks Authorize.net/Stripe/Square/PayPal via Settings, paste-your-own-API-keys (not OAuth Connect — those need per-provider platform approval). See AGENT_NOTES.md "Per-tenant payment gateways". |
 
 ## Domain model
 

@@ -11,6 +11,7 @@ import type { QuoteLineItem } from '@/lib/calculations';
 import { lineTotalCents } from '@/lib/calculations';
 import { normalizePhotos, photoSrc } from '@/lib/photos';
 import { appUrl } from '@/lib/config';
+import { publicGatewayConfig } from '@/lib/gateway-config';
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -25,7 +26,7 @@ export default async function QuoteDetailPage({ params }: Props) {
       include: {
         customer: true,
         invoice: { include: { payments: true } },
-        business: true,
+        business: { include: { paymentGatewayConfig: true } },
       },
     }),
     prisma.activity.findMany({
@@ -215,6 +216,7 @@ export default async function QuoteDetailPage({ params }: Props) {
             invoiceId={quote.invoice?.id}
             amountPaidCents={amountPaid}
             shareUrlInitial={shareUrl}
+            gatewayConfig={publicGatewayConfig(quote.business.paymentGatewayConfig)}
           />
           {quote.invoice && (
             <div className="panel">

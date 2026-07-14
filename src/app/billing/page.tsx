@@ -1,16 +1,18 @@
 import Link from 'next/link';
 import { requireWorkspace } from '@/lib/workspace';
 import { AppShell } from '@/components/AppShell';
+import { BillingActions } from '@/components/BillingActions';
 import { PRO_PRICE_USD } from '@/lib/billing';
 import { formatUsd } from '@/lib/money';
 
-/**
- * Trial / plan status page — no payment collection yet.
- * Payment wiring comes last per product decision.
- */
-export default async function BillingPage() {
-  const { business, billing } = await requireWorkspace();
+type Props = { searchParams: Promise<{ checkout?: string }> };
+
+export default async function BillingPage({ searchParams }: Props) {
+  const { business, billing, user } = await requireWorkspace();
   const price = formatUsd(billing.monthlyPriceCents);
+  const sp = await searchParams;
+  const justCheckedOut = sp.checkout === 'success';
+  const isOwner = user.role === 'owner';
 
   return (
     <AppShell
@@ -23,7 +25,7 @@ export default async function BillingPage() {
         <div>
           <p className="page-kicker">Account</p>
           <h1 className="page-title">Plan &amp; trial</h1>
-          <p className="page-sub">Subscription checkout is next — trial rules already apply.</p>
+          <p className="page-sub">Manage your HandyQuote Pro subscription.</p>
         </div>
       </div>
 
@@ -41,11 +43,6 @@ export default async function BillingPage() {
         {billing.isExpired && (
           <div className="mt-4 rounded-md border border-[var(--warn)] bg-[var(--warn-soft)] px-3 py-3 text-sm">
             Your free trial has ended. Sending new estimates is paused until Pro is active.
-            Card billing is not live yet — contact{' '}
-            <a className="font-semibold underline" href="mailto:owner@smithwebco.com">
-              owner@smithwebco.com
-            </a>{' '}
-            to activate Pro, or ask platform admin to set your plan.
           </div>
         )}
 
@@ -60,6 +57,33 @@ export default async function BillingPage() {
           <div className="mt-4 rounded-md border border-[var(--pine)] bg-[var(--pine-soft)] px-3 py-3 text-sm text-[var(--pine-deep)]">
             Pro is active for this workspace. Full product access.
           </div>
+        )}
+
+        {justCheckedOut && !billing.isPro && (
+          <div className="mt-4 rounded-md border border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-sm text-[var(--ink-2)]">
+            Finishing up your upgrade — this can take a few seconds. Refresh if this doesn&apos;t
+            update shortly.
+          </div>
+        )}
+
+        {isOwner ? (
+          !billing.isPro && billing.priceOverridden ? (
+            <div className="mt-4 rounded-md border border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-sm text-[var(--ink-2)]">
+              This workspace has custom pricing set by your platform admin. Contact{' '}
+              <a className="font-semibold underline" href="mailto:owner@smithwebco.com">
+                owner@smithwebco.com
+              </a>{' '}
+              to activate Pro.
+            </div>
+          ) : (
+            <BillingActions action={billing.isPro ? 'portal' : 'checkout'} />
+          )
+        ) : (
+          !billing.isPro && (
+            <p className="mt-4 text-sm text-[var(--muted)]">
+              Ask the business owner to upgrade to Pro.
+            </p>
+          )
         )}
 
         <div className="mt-6 flex flex-wrap gap-2">

@@ -21,6 +21,10 @@ type BizRow = {
   plan: string;
   trialEndsAt: string | null;
   monthlyPriceCents: number | null;
+  stripeCustomerId: string | null;
+  stripeSubscriptionStatus: string | null;
+  paymentGatewayProvider: string | null;
+  paymentGatewaySandbox: boolean | null;
   effectivePriceCents: number;
   defaultPriceCents: number;
   billingLabel: string;
@@ -194,6 +198,20 @@ export function AdminConsole() {
                     /mo
                     {b.monthlyPriceCents != null ? ' (override)' : ''} ·{' '}
                     {b.counts.quotes} estimates · {b.counts.customers} customers
+                  </p>
+                  {b.stripeCustomerId && (
+                    <p className="text-xs text-[var(--muted)]">
+                      Stripe: {b.stripeCustomerId}
+                      {b.stripeSubscriptionStatus ? ` · ${b.stripeSubscriptionStatus}` : ''}
+                      {' — '}
+                      cancel there first before changing plan here
+                    </p>
+                  )}
+                  <p className="text-xs text-[var(--muted)]">
+                    Payments:{' '}
+                    {b.paymentGatewayProvider
+                      ? `${b.paymentGatewayProvider}${b.paymentGatewaySandbox ? ' (sandbox)' : ''}`
+                      : 'not configured'}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">

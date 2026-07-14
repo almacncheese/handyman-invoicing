@@ -3,19 +3,17 @@
  * Field ORDER matters — see ffl-core ENGINEERING-NOTES.md.
  */
 
-import { getPaymentsMode } from './config';
-import {
-  MockPaymentProvider,
-  type ChargeInput,
-  type ChargeResult,
-  type PaymentProvider,
-} from './payments';
+import type { ChargeInput, ChargeResult, PaymentProvider } from './payments';
 
 type AuthNetConfig = {
   apiLoginId: string;
   transactionKey: string;
   sandbox: boolean;
+  /** Overridable for tests; production default is 25s. */
+  timeoutMs?: number;
 };
+
+const DEFAULT_TIMEOUT_MS = 25_000;
 
 export class AuthorizeNetProvider implements PaymentProvider {
   readonly name = 'authorize_net';
@@ -105,11 +103,17 @@ export class AuthorizeNetProvider implements PaymentProvider {
       },
     };
 
+    const controller = new AbortController();
+    const timeoutHandle = setTimeout(
+      () => controller.abort(),
+      this.cfg.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+    );
     try {
       const res = await fetch(this.endpoint(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
+        signal: controller.signal,
       });
       const text = await res.text();
       const json = JSON.parse(text.replace(/^\uFEFF/, ''));
@@ -138,32 +142,22 @@ export class AuthorizeNetProvider implements PaymentProvider {
         raw: json,
       };
     } catch (e) {
+      if (e instanceof Error && e.name === 'AbortError') {
+        return {
+          success: false,
+          provider: this.name,
+          errorCode: 'timeout',
+          errorMessage: 'Authorize.net did not respond in time',
+        };
+      }
       return {
         success: false,
         provider: this.name,
         errorCode: 'network',
         errorMessage: e instanceof Error ? e.message : 'AuthNet request failed',
       };
+    } finally {
+      clearTimeout(timeoutHandle);
     }
   }
-}
-
-export function createPaymentProvider(): PaymentProvider {
-  const mode = getPaymentsMode();
-  if (mode === 'mock') {
-    return new MockPaymentProvider();
-  }
-  const apiLoginId = process.env.AUTHORIZE_NET_API_LOGIN_ID;
-  const transactionKey = process.env.AUTHORIZE_NET_TRANSACTION_KEY;
-  if (!apiLoginId || !transactionKey) {
-    if (process.env.ALLOW_MOCK_PAYMENTS === 'true') {
-      return new MockPaymentProvider();
-    }
-    throw new Error('AUTHORIZE_NET credentials required (or PAYMENTS_MODE=mock)');
-  }
-  return new AuthorizeNetProvider({
-    apiLoginId,
-    transactionKey,
-    sandbox: process.env.AUTHORIZE_NET_SANDBOX !== 'false',
-  });
 }

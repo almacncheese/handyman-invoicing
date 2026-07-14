@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatUsd } from '@/lib/money';
+import { PaymentCardForm } from '@/components/PaymentCardForm';
+import type { PublicGatewayConfig } from '@/lib/gateway-config';
 
 export function QuoteActions({
   quoteId,
@@ -12,6 +14,7 @@ export function QuoteActions({
   invoiceId,
   amountPaidCents = 0,
   shareUrlInitial,
+  gatewayConfig = null,
 }: {
   quoteId: string;
   status: string;
@@ -20,11 +23,14 @@ export function QuoteActions({
   invoiceId?: string | null;
   amountPaidCents?: number;
   shareUrlInitial?: string | null;
+  gatewayConfig?: PublicGatewayConfig | null;
 }) {
   const router = useRouter();
   const [msg, setMsg] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(shareUrlInitial || null);
   const [busy, setBusy] = useState(false);
+  const [showCardForm, setShowCardForm] = useState(false);
+  const [cardInvoiceId, setCardInvoiceId] = useState<string | null>(invoiceId || null);
 
   async function run(fn: () => Promise<void>) {
     setBusy(true);
@@ -159,6 +165,14 @@ export function QuoteActions({
     });
   }
 
+  async function openCardForm() {
+    await run(async () => {
+      const invId = await ensureInvoiceId();
+      setCardInvoiceId(invId);
+      setShowCardForm(true);
+    });
+  }
+
   async function duplicate() {
     await run(async () => {
       const res = await fetch(`/api/quotes/${quoteId}/duplicate`, { method: 'POST' });
@@ -226,9 +240,21 @@ export function QuoteActions({
           <div className="rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-2)] p-3">
             <p className="section-label !mb-1">Record deposit · {formatUsd(depositLeft)}</p>
             <p className="text-xs leading-relaxed text-[var(--muted)]">
-              Card payments are off. Log cash, check, or Zelle when you receive them.
+              {gatewayConfig
+                ? 'Charge a card over the phone, or log cash, check, or Zelle when you receive them.'
+                : 'Card payments are off. Log cash, check, or Zelle when you receive them.'}
             </p>
             <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {gatewayConfig && (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  disabled={busy}
+                  onClick={() => (showCardForm ? setShowCardForm(false) : openCardForm())}
+                >
+                  {showCardForm ? 'Cancel card charge' : 'Charge card'}
+                </button>
+              )}
               {(['cash', 'check', 'zelle', 'cashapp', 'venmo'] as const).map((m) => (
                 <button
                   key={m}
@@ -241,6 +267,23 @@ export function QuoteActions({
                 </button>
               ))}
             </div>
+            {showCardForm && cardInvoiceId && (
+              <div className="mt-3">
+                <PaymentCardForm
+                  gatewayConfig={gatewayConfig}
+                  chargeEndpoint="/api/payments/charge"
+                  intentEndpoint="/api/payments/intent"
+                  confirmEndpoint="/api/payments/confirm"
+                  extraBody={{ invoiceId: cardInvoiceId, amountCents: depositLeft }}
+                  amountLabel={formatUsd(depositLeft)}
+                  onSuccess={() => {
+                    setShowCardForm(false);
+                    setMsg(`Charged ${formatUsd(depositLeft)} by card`);
+                    router.refresh();
+                  }}
+                />
+              </div>
+            )}
           </div>
         )}
 

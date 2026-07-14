@@ -37,14 +37,15 @@ export function rateLimit(opts: {
 
 /**
  * Client IP for rate limiting.
- * Prefer Cloudflare's real client IP when present (not spoofable from the
- * public internet when traffic only arrives via CF). Fall back to XFF/X-Real-IP
- * only as secondary — those headers are spoofable without a trusted edge.
+ * This deployment is nginx-direct on a single VPS with NO Cloudflare in front
+ * (see DEPLOY.md) — cf-connecting-ip would never be legitimately set by a
+ * trusted edge here, so trusting it is worse than not checking it at all (an
+ * attacker can set it to anything and rotate it per request to dodge every
+ * IP-keyed limit in the app). Do not resurrect that trust without an actual CF
+ * proxy in front verified via its own header (and even then, only after
+ * confirming nginx/Coolify strips a client-supplied value first).
  */
 export function clientIp(req: Request): string {
-  const cf = req.headers.get('cf-connecting-ip')?.trim();
-  if (cf) return cf.slice(0, 64);
-
   // Only trust XFF first hop when we are behind a reverse proxy that strips
   // client-supplied XFF (Coolify/nginx typically does). Still spoofable if the
   // app port is exposed directly — do not publish app ports on eth0.

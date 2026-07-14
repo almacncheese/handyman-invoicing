@@ -14,14 +14,14 @@ describe('rateLimit', () => {
 });
 
 describe('clientIp', () => {
-  it('prefers cf-connecting-ip over x-forwarded-for', () => {
+  it('ignores cf-connecting-ip — this deployment runs nginx-direct with no Cloudflare in front, so that header is attacker-controlled, not proxy-verified', () => {
     const req = new Request('http://localhost', {
       headers: {
         'cf-connecting-ip': '203.0.113.9',
         'x-forwarded-for': '1.2.3.4, 5.6.7.8',
       },
     });
-    expect(clientIp(req)).toBe('203.0.113.9');
+    expect(clientIp(req)).toBe('1.2.3.4');
   });
 
   it('falls back to first XFF hop', () => {

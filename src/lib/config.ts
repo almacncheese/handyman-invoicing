@@ -18,22 +18,31 @@ export function getAuthSecret(): string {
   return secret || 'dev-only-handyquote-secret-change-me';
 }
 
-export function getPaymentsMode(): 'mock' | 'authorize_net' {
-  const mode = (process.env.PAYMENTS_MODE || '').toLowerCase();
-  if (mode === 'mock') return 'mock';
-  if (mode === 'authorize_net' || mode === 'authnet') return 'authorize_net';
-  // Auto: use AuthNet when keys present
-  if (
-    process.env.AUTHORIZE_NET_API_LOGIN_ID &&
-    process.env.AUTHORIZE_NET_TRANSACTION_KEY
-  ) {
-    return 'authorize_net';
-  }
-  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_MOCK_PAYMENTS !== 'true') {
-    // Production without keys still boots, but charges will fail closed in provider factory
-    return 'authorize_net';
-  }
-  return 'mock';
+/**
+ * Stripe subscription billing (HandyQuote's own $29/mo Pro plan — separate from
+ * the contractor's own deposit/invoice payment collection above).
+ * Unlike getAuthSecret(), there is no safe fallback for these even in dev —
+ * each local `stripe listen` session mints its own distinct webhook secret.
+ */
+export function getStripeSecretKey(): string {
+  return required('STRIPE_SECRET_KEY', process.env.STRIPE_SECRET_KEY);
+}
+
+export function getStripeWebhookSecret(): string {
+  return required('STRIPE_WEBHOOK_SECRET', process.env.STRIPE_WEBHOOK_SECRET);
+}
+
+export function getStripePriceId(): string {
+  return required('STRIPE_PRICE_ID', process.env.STRIPE_PRICE_ID);
+}
+
+/**
+ * Master key for encrypting tenant payment-gateway secrets at rest
+ * (src/lib/crypto.ts). At least as sensitive as the Stripe billing keys — a
+ * leak unlocks every tenant's payment secret at once — so no dev fallback.
+ */
+export function getEncryptionKey(): string {
+  return required('ENCRYPTION_KEY', process.env.ENCRYPTION_KEY);
 }
 
 export function appUrl(): string {

@@ -3,6 +3,8 @@
 import { useRef, useState } from 'react';
 import { formatUsd } from '@/lib/money';
 import type { PaymentLink } from '@/lib/payment-links';
+import { PaymentCardForm } from '@/components/PaymentCardForm';
+import type { PublicGatewayConfig } from '@/lib/gateway-config';
 
 type Estimate = {
   title: string;
@@ -35,6 +37,10 @@ type Estimate = {
   hasSignature: boolean;
   declined?: boolean;
   paymentLinks?: PaymentLink[];
+  payment?: {
+    gatewayConfig: PublicGatewayConfig | null;
+    balanceDueCents: number;
+  } | null;
   customer: { name: string } | null;
   business: {
     name: string;
@@ -70,6 +76,8 @@ export function PublicEstimate({
   const [busy, setBusy] = useState(false);
   const [declineOpen, setDeclineOpen] = useState(false);
   const [declineReason, setDeclineReason] = useState('');
+  const [amountChoice, setAmountChoice] = useState<'deposit' | 'balance'>('deposit');
+  const [paidJustNow, setPaidJustNow] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
 
@@ -332,9 +340,61 @@ export function PublicEstimate({
                     </p>
                   )}
                 </div>
+                {paidJustNow ? (
+                  <div className="rounded-[var(--radius-sm)] bg-[var(--pine-soft)] px-3 py-3 text-sm">
+                    <p className="font-semibold text-[var(--pine-deep)]">Payment received — thank you!</p>
+                  </div>
+                ) : (
+                  estimate.payment?.gatewayConfig && (
+                    <div className="space-y-2 border-t border-[var(--hairline)] pt-3">
+                      <div className="section-label">Pay by card</div>
+                      {(() => {
+                        const balanceDueCents = estimate.payment.balanceDueCents;
+                        const depositChoiceCents = Math.min(estimate.depositCents, balanceDueCents);
+                        const hasChoice = depositChoiceCents > 0 && depositChoiceCents < balanceDueCents;
+                        const amountCents = hasChoice && amountChoice === 'deposit' ? depositChoiceCents : balanceDueCents;
+                        const [firstName, ...rest] = (estimate.signedName || '').trim().split(/\s+/);
+                        return (
+                          <>
+                            {hasChoice && (
+                              <div className="flex gap-1.5 text-xs font-semibold">
+                                <button
+                                  type="button"
+                                  className={amountChoice === 'deposit' ? 'btn btn-secondary btn-sm' : 'btn btn-ghost btn-sm'}
+                                  onClick={() => setAmountChoice('deposit')}
+                                >
+                                  Deposit ({formatUsd(depositChoiceCents)})
+                                </button>
+                                <button
+                                  type="button"
+                                  className={amountChoice === 'balance' ? 'btn btn-secondary btn-sm' : 'btn btn-ghost btn-sm'}
+                                  onClick={() => setAmountChoice('balance')}
+                                >
+                                  Full balance ({formatUsd(balanceDueCents)})
+                                </button>
+                              </div>
+                            )}
+                            <PaymentCardForm
+                              gatewayConfig={estimate.payment.gatewayConfig}
+                              chargeEndpoint={`/api/public/estimate/${token}/pay`}
+                              intentEndpoint={`/api/public/estimate/${token}/pay/intent`}
+                              confirmEndpoint={`/api/public/estimate/${token}/pay/confirm`}
+                              extraBody={{ amountChoice: hasChoice ? amountChoice : 'balance' }}
+                              amountLabel={formatUsd(amountCents)}
+                              defaultFirstName={firstName}
+                              defaultLastName={rest.join(' ')}
+                              onSuccess={() => setPaidJustNow(true)}
+                            />
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )
+                )}
+
                 {estimate.paymentLinks && estimate.paymentLinks.length > 0 && (
                   <div className="space-y-2 border-t border-[var(--hairline)] pt-3">
-                    <div className="section-label">Payment options</div>
+                    <div className="section-label">Other payment options</div>
                     {estimate.paymentLinks.map((l) =>
                       l.href ? (
                         <a

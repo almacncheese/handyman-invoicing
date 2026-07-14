@@ -32,6 +32,11 @@ model Business {
   trialEndsAt      DateTime?
   /// Platform admin can override Pro list price (cents/month). null = default $29.
   monthlyPriceCents Int?
+  stripeCustomerId       String?   @unique
+  stripeSubscriptionId   String?   @unique
+  stripeSubscriptionStatus String?
+  /// event.created (unix seconds) of the last Stripe webhook actually applied — guards against out-of-order delivery
+  stripeLastEventAt     DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
@@ -42,6 +47,38 @@ model Business {
   payments   Payment[]
   templates  LineTemplate[]
   activities Activity[]
+  paymentGatewayConfig PaymentGatewayConfig?
+}
+
+/// One active payment gateway per tenant (re-save to switch) — each contractor
+/// brings their OWN merchant account (paste-your-own-API-keys model, not an
+/// OAuth Connect flow). Each provider module owns its own zod schema for the
+/// publicFields/secret shape — a 5th processor needs no migration, just a new
+/// provider module + schema branch. See src/lib/gateway-config.ts.
+model PaymentGatewayConfig {
+  id           String   @id @default(cuid())
+  businessId   String   @unique
+  provider     String   // 'authorize_net' | 'stripe' | 'square' | 'paypal'
+  sandbox      Boolean  @default(true)
+  /// Non-secret, provider-shaped (e.g. {apiLoginId,clientKey} | {publishableKey}
+  /// | {applicationId,locationId} | {clientId}) — safe to read back to the
+  /// settings UI and to the public estimate page.
+  publicFields Json
+  /// AES-256-GCM-encrypted JSON blob (src/lib/crypto.ts) of the provider's
+  /// secret field(s) — e.g. {transactionKey} | {secretKey} | {accessToken} |
+  /// {clientSecret}. Never decrypted for display, only for charging.
+  secretEnc    String   @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+/// Webhook idempotency ledger — Stripe redelivers events, so the event id itself
+/// is the atomicity gate (insert-then-catch-unique-violation), not a pre-check.
+model StripeEvent {
+  id          String   @id // the Stripe event id, e.g. evt_xxx
+  processedAt DateTime @default(now())
 }
 
 model User {
@@ -172,18 +209,25 @@ model Invoice {
   @@index([businessId, status])
 }
 
-/// Manual payment records only (cash/check/Zelle etc.) — no live card processor in this build
+/// Manual payment records (cash/check/Zelle etc.) AND real per-tenant card
+/// charges (method='card', provider=one of the 4 gateways) — see
+/// src/lib/card-charge.ts and src/lib/providers/*.
 model Payment {
   id             String    @id @default(cuid())
   businessId     String
   invoiceId      String
   amountCents    Int
   currency       String    @default("USD")
-  status         String    @default("succeeded") // pending|succeeded|failed|void
-  method         String    @default("other") // cash | check | zelle | cashapp | venmo | other
+  status         String    @default("succeeded") // pending|processing|awaiting_confirmation|succeeded|failed|void
+  method         String    @default("other") // cash | check | zelle | cashapp | venmo | card | other
   idempotencyKey String    @unique
-  provider       String    @default("manual")
+  provider       String    @default("manual") // manual | authorize_net | square | stripe | paypal
   transactionId  String?
+  /// Stripe PaymentIntent id / PayPal order id for the two-and-three-phase
+  /// providers — stored server-side at create-intent/create-order time, looked
+  /// up during confirm/capture. NEVER supplied by the client (see
+  /// card-charge.ts's cross-tenant/stale-reference protection).
+  providerRef    String?
   note           String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt

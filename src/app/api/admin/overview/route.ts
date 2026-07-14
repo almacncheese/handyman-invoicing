@@ -26,6 +26,7 @@ export async function GET() {
         _count: {
           select: { quotes: true, customers: true, invoices: true },
         },
+        paymentGatewayConfig: { select: { provider: true, sandbox: true } },
       },
     });
 
@@ -42,6 +43,16 @@ export async function GET() {
         plan: b.plan,
         trialEndsAt: b.trialEndsAt,
         monthlyPriceCents: b.monthlyPriceCents,
+        // Read-only Stripe status — informational only. Manually overriding `plan`
+        // on a business with a live Stripe subscription is a "cancel it in Stripe
+        // first" operating convention, not something enforced here.
+        stripeCustomerId: b.stripeCustomerId,
+        stripeSubscriptionStatus: b.stripeSubscriptionStatus,
+        // Read-only, no secret values — which of the 4 contractor-side card
+        // processors (if any) this tenant has configured for their OWN
+        // customers, unrelated to the Stripe billing fields above.
+        paymentGatewayProvider: b.paymentGatewayConfig?.provider ?? null,
+        paymentGatewaySandbox: b.paymentGatewayConfig?.sandbox ?? null,
         effectivePriceCents: billing.monthlyPriceCents,
         defaultPriceCents: PRO_PRICE_USD * 100,
         billingLabel: billing.label,
