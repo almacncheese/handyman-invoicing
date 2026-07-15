@@ -234,7 +234,7 @@ describe('POST /api/public/estimate/[token]/pay — gateway config dispatch', ()
         metadata: {
           opaqueDataDescriptor: 'COMMON.ACCEPT.INAPP.PAYMENT',
           opaqueDataValue: 'opaque-token',
-          invoiceNumber: 'inv_1',
+          invoiceNumber: 'EST-0001',
         },
       }),
     );

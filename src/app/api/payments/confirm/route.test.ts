@@ -101,7 +101,10 @@ describe('POST /api/payments/confirm', () => {
     mockCancelStripeIntent.mockResolvedValue({ cancelled: true });
     const res = await POST(makeRequest({ paymentId: 'pay_1', action: 'cancel' }));
 
-    expect(mockCancelStripeIntent).toHaveBeenCalledWith({ businessId: 'biz_1', invoiceId: 'inv_1', paymentId: 'pay_1' });
+    expect(mockCancelStripeIntent).toHaveBeenCalledWith(
+      { businessId: 'biz_1', invoiceId: 'inv_1', paymentId: 'pay_1' },
+      expect.objectContaining({ provider: 'stripe' }),
+    );
     expect(mockConfirmStripeIntent).not.toHaveBeenCalled();
     expect(res.status).toBe(200);
     const body = await res.json();

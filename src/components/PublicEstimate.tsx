@@ -352,7 +352,10 @@ export function PublicEstimate({
                         const balanceDueCents = estimate.payment.balanceDueCents;
                         const depositChoiceCents = Math.min(estimate.depositCents, balanceDueCents);
                         const hasChoice = depositChoiceCents > 0 && depositChoiceCents < balanceDueCents;
-                        const amountCents = hasChoice && amountChoice === 'deposit' ? depositChoiceCents : balanceDueCents;
+                        // Prefer deposit when both options exist (typical post-accept pay).
+                        const effectiveChoice = hasChoice ? amountChoice : 'balance';
+                        const amountCents =
+                          effectiveChoice === 'deposit' ? depositChoiceCents : balanceDueCents;
                         const [firstName, ...rest] = (estimate.signedName || '').trim().split(/\s+/);
                         return (
                           <>
@@ -379,7 +382,7 @@ export function PublicEstimate({
                               chargeEndpoint={`/api/public/estimate/${token}/pay`}
                               intentEndpoint={`/api/public/estimate/${token}/pay/intent`}
                               confirmEndpoint={`/api/public/estimate/${token}/pay/confirm`}
-                              extraBody={{ amountChoice: hasChoice ? amountChoice : 'balance' }}
+                              extraBody={{ amountChoice: effectiveChoice }}
                               amountLabel={formatUsd(amountCents)}
                               defaultFirstName={firstName}
                               defaultLastName={rest.join(' ')}

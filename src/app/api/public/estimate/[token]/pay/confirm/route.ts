@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { isValidPublicToken } from '@/lib/authz';
+import { clientIp, rateLimit } from '@/lib/rate-limit';
 import { loadGatewayConfig } from '@/lib/gateway-config';
 import { confirmStripeIntent, cancelStripeIntent } from '@/lib/providers/stripe-charge';
 import { capturePaypalOrder, cancelPaypalOrder } from '@/lib/providers/paypal-charge';
@@ -23,6 +24,11 @@ type Ctx = { params: Promise<{ token: string }> };
 
 export async function POST(req: NextRequest, ctx: Ctx) {
   try {
+    const limited = rateLimit({ key: `public-pay-confirm:${clientIp(req)}`, limit: 30, windowMs: 15 * 60_000 });
+    if (!limited.ok) {
+      return jsonError('Too many attempts — try again later', 429);
+    }
+
     const { token } = await ctx.params;
     if (!isValidPublicToken(token)) {
       return jsonError('Not found', 404);
@@ -30,13 +36,23 @@ export async function POST(req: NextRequest, ctx: Ctx) {
 
     const body = schema.parse(await req.json());
 
-    const quote = await prisma.quote.findUnique({ where: { publicToken: token }, select: { businessId: true } });
+    const quote = await prisma.quote.findUnique({
+      where: { publicToken: token },
+      select: { id: true, businessId: true, invoice: { select: { id: true } } },
+    });
     if (!quote) {
       return jsonError('Not found', 404);
     }
 
     const row = await prisma.payment.findUnique({ where: { id: body.paymentId } });
-    if (!row || row.businessId !== quote.businessId) {
+    // Scope to this estimate's invoice — businessId alone would let one public
+    // token confirm/cancel another estimate's payment for the same contractor.
+    if (
+      !row ||
+      row.businessId !== quote.businessId ||
+      !quote.invoice ||
+      row.invoiceId !== quote.invoice.id
+    ) {
       return jsonError('Not found', 404);
     }
 
@@ -49,7 +65,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
 
     if (body.action === 'cancel') {
       if (config.provider === 'stripe') {
-        return jsonOk(await cancelStripeIntent(scoped));
+        return jsonOk(await cancelStripeIntent(scoped, config));
       }
       if (config.provider === 'paypal') {
         return jsonOk(await cancelPaypalOrder(scoped));

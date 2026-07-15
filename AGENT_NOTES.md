@@ -105,7 +105,7 @@ Platform admin: `owner@smithwebco.com` (password in Keychain `handyquote_platfor
 
 ## Active known issues
 
-- **Per-tenant card charging (4 processors, contractor phone-entry + public customer self-serve) built 2026-07-14, awaiting `ENCRYPTION_KEY` in Coolify + real contractor credentials** — see "Per-tenant payment gateways" section below. Code path is live and tested; nothing charges a real card until a contractor configures their own processor via Settings.
+- **Per-tenant card charging (4 processors, contractor phone-entry + public customer self-serve) built 2026-07-14; audit harden 2026-07-15** (`docs/AUDIT-2026-07-15.md`) — still awaiting `ENCRYPTION_KEY` in Coolify + real contractor credentials. Settings UI: all four processors self-serve (owner). Nothing charges a real card until a contractor configures their own processor via Settings.
 - **Pro subscription checkout (HandyQuote → contractor) built 2026-07-13, awaiting real Stripe keys** — see "Stripe subscription billing" section below. Code path is live and tested; nothing charges real money until `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET`/`STRIPE_PRICE_ID` are set.
 - **Resend from-domain:** still onboarding@resend.dev until `quickhandyquote.com` verified in Resend (SPF/DKIM)
 - Photos: R2 optional — needs Coolify `R2_*` env (code ready; see Photo object storage section)

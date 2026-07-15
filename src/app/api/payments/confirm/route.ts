@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
     if (body.action === 'cancel') {
       if (config.provider === 'stripe') {
-        return jsonOk(await cancelStripeIntent(scoped));
+        return jsonOk(await cancelStripeIntent(scoped, config));
       }
       if (config.provider === 'paypal') {
         return jsonOk(await cancelPaypalOrder(scoped));

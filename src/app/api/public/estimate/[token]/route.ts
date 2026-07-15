@@ -63,7 +63,11 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     }
 
     const locked = status === 'accepted' || status === 'invoiced' || status === 'paid';
-    const balanceDueCents = quote.invoice ? quote.invoice.amountDueCents : quote.depositCents;
+    // Remaining balance for pay UI. Before an invoice exists, full quote total is
+    // the true "balance" — deposit is a separate choice (see PublicEstimate).
+    // Using depositCents here made the UI show deposit while amountChoice=balance
+    // charged the full total after lazy convert (money/UX mismatch).
+    const balanceDueCents = quote.invoice ? quote.invoice.amountDueCents : quote.totalCents;
     const payment =
       locked && quote.invoice?.status !== 'void' && balanceDueCents > 0
         ? { gatewayConfig: publicGatewayConfig(quote.business.paymentGatewayConfig), balanceDueCents }

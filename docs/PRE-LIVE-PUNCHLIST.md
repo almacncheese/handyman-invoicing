@@ -32,7 +32,9 @@ Portfolio gate: `~/dev/_PRE-LIVE-GATE.md`.
 - [x] Public estimate GET rate-limited
 - [x] `error.tsx` + `global-error.tsx` recovery UI
 - [ ] Full route-level integration tests (lib tests + CI cover criticals; e2e still thin)
-- [ ] Card deposits + Pro Stripe checkout (product-deferred; charge remains 501)
+- [x] Per-tenant card gateways (AuthNet/Stripe/Square/PayPal) built 2026-07-14; audit fixes 2026-07-15 — see `docs/AUDIT-2026-07-15.md`
+- [ ] Coolify `ENCRYPTION_KEY` + sandbox E2E per processor before real card money
+- [ ] Pro Stripe checkout awaiting platform keys (`STRIPE_*`)
 - [ ] Third-party error tracking SDK (Sentry etc.) — console structured log only for now
 
 ## Strengths to preserve
@@ -41,4 +43,4 @@ Tenant isolation (404), integer cents, server totals, public token design, Zod o
 
 ## Next adversarial pass
 
-Re-run `/pre-live-gate` or Claude adversarial after payment/Pro checkout lands — money path was intentionally 501 and still needs the full claim-before-charge + ledger review when enabled.
+2026-07-15 full platform audit: `docs/AUDIT-2026-07-15.md` (critical deposit/balance UI mismatch, public confirm invoice scope, Stripe intermediate-status + cancel-at-provider fixed; 260 tests green). Re-run after Coolify `ENCRYPTION_KEY` + first sandbox charges.

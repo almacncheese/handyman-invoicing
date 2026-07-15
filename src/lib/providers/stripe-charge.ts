@@ -163,6 +163,21 @@ export async function confirmStripeIntent(
   const stripe = stripeClientFor(cfg);
   const intent = await stripe.paymentIntents.retrieve(row.providerRef);
 
+  // Intermediate statuses must NOT settle as failed — Stripe may still capture.
+  // Roll the claim back to awaiting_confirmation so a later confirm can retry.
+  if (
+    intent.status === 'processing' ||
+    intent.status === 'requires_action' ||
+    intent.status === 'requires_confirmation' ||
+    intent.status === 'requires_capture'
+  ) {
+    await prisma.payment.updateMany({
+      where: { id: params.paymentId, status: 'processing' },
+      data: { status: 'awaiting_confirmation' },
+    });
+    return { outcome: 'in_flight' };
+  }
+
   const chargeResult: ChargeResult =
     intent.status === 'succeeded'
       ? { success: true, provider: 'stripe', transactionId: intent.id, raw: intent }
@@ -196,12 +211,38 @@ export async function confirmStripeIntent(
  * Elements form is common and benign, unlike a crash. Only ever moves
  * awaiting_confirmation -> failed; never touches processing/succeeded/failed,
  * so it can't undo a charge that's already underway or done.
+ *
+ * Also best-effort cancels the PaymentIntent at Stripe so a late client-side
+ * confirmCardPayment cannot capture money after we already marked the row failed
+ * (which would leave funds taken with no ledger credit).
  */
-export async function cancelStripeIntent(params: {
-  businessId: string;
-  invoiceId: string;
-  paymentId: string;
-}): Promise<{ cancelled: boolean }> {
+export async function cancelStripeIntent(
+  params: {
+    businessId: string;
+    invoiceId: string;
+    paymentId: string;
+  },
+  cfg?: StripeGatewayConfig,
+): Promise<{ cancelled: boolean }> {
+  const row = await prisma.payment.findFirst({
+    where: {
+      id: params.paymentId,
+      businessId: params.businessId,
+      invoiceId: params.invoiceId,
+      status: 'awaiting_confirmation',
+    },
+  });
+  if (!row) return { cancelled: false };
+
+  if (cfg && row.providerRef) {
+    try {
+      await stripeClientFor(cfg).paymentIntents.cancel(row.providerRef);
+    } catch {
+      // Intent may already be succeeded/canceled — local row still flips failed
+      // only when still awaiting; confirm path re-retrieves for truth.
+    }
+  }
+
   const result = await prisma.payment.updateMany({
     where: {
       id: params.paymentId,

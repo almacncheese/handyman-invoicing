@@ -50,7 +50,9 @@ export default async function PublicEstimatePage({ params }: Props) {
 
   const displayStatus = quote.status === 'sent' && !quote.viewedAt ? 'viewed' : quote.status;
   const locked = displayStatus === 'accepted' || displayStatus === 'invoiced' || displayStatus === 'paid';
-  const balanceDueCents = quote.invoice ? quote.invoice.amountDueCents : quote.depositCents;
+  // Full remaining balance (not deposit). Deposit is a separate amountChoice on the client.
+  // Pre-invoice: totalCents matches what pay routes charge for amountChoice=balance after lazy convert.
+  const balanceDueCents = quote.invoice ? quote.invoice.amountDueCents : quote.totalCents;
   const payment =
     locked && quote.invoice?.status !== 'void' && balanceDueCents > 0
       ? { gatewayConfig: publicGatewayConfig(quote.business.paymentGatewayConfig), balanceDueCents }

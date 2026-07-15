@@ -79,13 +79,16 @@ describe('GET /api/public/estimate/[token] — payment info exposure', () => {
     expect(body.estimate.payment).toBeFalsy();
   });
 
-  it('exposes the deposit balance and gateway config for an accepted quote with no invoice yet', async () => {
+  it('exposes full quote total as balance (not deposit) for an accepted quote with no invoice yet', async () => {
     const res = await GET(makeRequest(), ctx());
     const body = await res.json();
+    // depositCents stays on estimate for the deposit/balance chooser; balanceDue must match
+    // what amountChoice=balance charges after lazy invoice convert (total, not deposit).
     expect(body.estimate.payment).toEqual({
       gatewayConfig: { provider: 'authorize_net', sandbox: true, apiLoginId: 'login', clientKey: 'key' },
-      balanceDueCents: 3000,
+      balanceDueCents: 10000,
     });
+    expect(body.estimate.depositCents).toBe(3000);
   });
 
   it('exposes the invoice balance once the quote has been converted', async () => {
@@ -125,6 +128,6 @@ describe('GET /api/public/estimate/[token] — payment info exposure', () => {
     mockPublicGatewayConfig.mockReturnValue(null);
     const res = await GET(makeRequest(), ctx());
     const body = await res.json();
-    expect(body.estimate.payment).toEqual({ gatewayConfig: null, balanceDueCents: 3000 });
+    expect(body.estimate.payment).toEqual({ gatewayConfig: null, balanceDueCents: 10000 });
   });
 });

@@ -110,7 +110,8 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       metadata = {
         opaqueDataDescriptor: body.opaqueData.dataDescriptor,
         opaqueDataValue: body.opaqueData.dataValue,
-        invoiceNumber: invoiceId,
+        // AuthNet invoiceNumber is a short display ref — use quote number, not the DB cuid
+        invoiceNumber: (quote.number || quote.id).slice(0, 20),
       };
     } else {
       if (!body.sourceId) return jsonError('Missing card payment token', 422);

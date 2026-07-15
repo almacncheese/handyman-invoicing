@@ -10,8 +10,14 @@ const mockCancelStripeIntent = vi.fn();
 const mockCapturePaypalOrder = vi.fn();
 const mockCancelPaypalOrder = vi.fn();
 const mockLogActivity = vi.fn();
+const mockRateLimit = vi.fn();
+const mockClientIp = vi.fn();
 
 vi.mock('@/lib/authz', () => ({ isValidPublicToken: (...a: unknown[]) => mockIsValidPublicToken(...a) }));
+vi.mock('@/lib/rate-limit', () => ({
+  rateLimit: (...a: unknown[]) => mockRateLimit(...a),
+  clientIp: (...a: unknown[]) => mockClientIp(...a),
+}));
 vi.mock('@/lib/db', () => ({
   prisma: {
     quote: { findUnique: (...a: unknown[]) => mockQuoteFindUnique(...a) },
@@ -46,7 +52,9 @@ const stripeRow = { businessId: 'biz_1', invoiceId: 'inv_1', provider: 'stripe' 
 beforeEach(() => {
   vi.clearAllMocks();
   mockIsValidPublicToken.mockReturnValue(true);
-  mockQuoteFindUnique.mockResolvedValue({ businessId: 'biz_1' });
+  mockRateLimit.mockReturnValue({ ok: true });
+  mockClientIp.mockReturnValue('1.2.3.4');
+  mockQuoteFindUnique.mockResolvedValue({ id: 'q1', businessId: 'biz_1', invoice: { id: 'inv_1' } });
   mockPaymentFindUnique.mockResolvedValue(stripeRow);
   mockLoadGatewayConfig.mockResolvedValue({ provider: 'stripe', sandbox: true, publishableKey: 'pk', secretKey: 'sk' });
 });
@@ -67,6 +75,20 @@ describe('POST /api/public/estimate/[token]/pay/confirm', () => {
 
   it("returns 404 when the payment does not belong to this token's business", async () => {
     mockPaymentFindUnique.mockResolvedValue({ ...stripeRow, businessId: 'someone_else' });
+    const res = await POST(makeRequest({ paymentId: 'pay_1' }), ctx());
+    expect(res.status).toBe(404);
+    expect(mockConfirmStripeIntent).not.toHaveBeenCalled();
+  });
+
+  it("returns 404 when the payment is for another estimate invoice in the same business", async () => {
+    mockPaymentFindUnique.mockResolvedValue({ ...stripeRow, invoiceId: 'inv_OTHER' });
+    const res = await POST(makeRequest({ paymentId: 'pay_1' }), ctx());
+    expect(res.status).toBe(404);
+    expect(mockConfirmStripeIntent).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when the quote has no invoice yet (payment cannot belong to this estimate)', async () => {
+    mockQuoteFindUnique.mockResolvedValue({ id: 'q1', businessId: 'biz_1', invoice: null });
     const res = await POST(makeRequest({ paymentId: 'pay_1' }), ctx());
     expect(res.status).toBe(404);
     expect(mockConfirmStripeIntent).not.toHaveBeenCalled();
@@ -93,7 +115,10 @@ describe('POST /api/public/estimate/[token]/pay/confirm', () => {
   it('cancels a Stripe intent when action=cancel', async () => {
     mockCancelStripeIntent.mockResolvedValue({ cancelled: true });
     const res = await POST(makeRequest({ paymentId: 'pay_1', action: 'cancel' }), ctx());
-    expect(mockCancelStripeIntent).toHaveBeenCalledWith({ businessId: 'biz_1', invoiceId: 'inv_1', paymentId: 'pay_1' });
+    expect(mockCancelStripeIntent).toHaveBeenCalledWith(
+      { businessId: 'biz_1', invoiceId: 'inv_1', paymentId: 'pay_1' },
+      expect.objectContaining({ provider: 'stripe' }),
+    );
     expect(res.status).toBe(200);
   });
 

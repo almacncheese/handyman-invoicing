@@ -5,6 +5,7 @@ const mockPaymentCreate = vi.fn();
 const mockPaymentUpdateMany = vi.fn();
 const mockPaymentUpdate = vi.fn();
 const mockPaymentFindUnique = vi.fn();
+const mockPaymentFindFirst = vi.fn();
 const mockInvoiceFindUniqueOrThrow = vi.fn();
 const mockInvoiceUpdate = vi.fn();
 const mockQuoteFindUniqueOrThrow = vi.fn();
@@ -12,6 +13,7 @@ const mockQuoteUpdate = vi.fn();
 const mockQueryRaw = vi.fn();
 const mockIntentCreate = vi.fn();
 const mockIntentRetrieve = vi.fn();
+const mockIntentCancel = vi.fn();
 
 vi.mock('@/lib/db', () => ({
   prisma: {
@@ -20,6 +22,7 @@ vi.mock('@/lib/db', () => ({
       updateMany: (...a: unknown[]) => mockPaymentUpdateMany(...a),
       update: (...a: unknown[]) => mockPaymentUpdate(...a),
       findUnique: (...a: unknown[]) => mockPaymentFindUnique(...a),
+      findFirst: (...a: unknown[]) => mockPaymentFindFirst(...a),
     },
     $transaction: async (cb: (tx: unknown) => unknown) =>
       cb({
@@ -42,6 +45,7 @@ vi.mock('stripe', () => ({
     paymentIntents: {
       create: (...a: unknown[]) => mockIntentCreate(...a),
       retrieve: (...a: unknown[]) => mockIntentRetrieve(...a),
+      cancel: (...a: unknown[]) => mockIntentCancel(...a),
     },
   })),
 }));
@@ -244,6 +248,29 @@ describe('confirmStripeIntent', () => {
     expect(result.outcome).toBe('failed');
   });
 
+  it('does not mark failed for intermediate Stripe statuses (processing) — rolls claim back', async () => {
+    mockPaymentFindUnique.mockResolvedValueOnce({
+      id: 'pay_1',
+      businessId: 'biz_1',
+      invoiceId: 'inv_1',
+      amountCents: 4000,
+      status: 'awaiting_confirmation',
+      providerRef: 'pi_123',
+      idempotencyKey: 'stripe_key_1',
+    });
+    mockPaymentUpdateMany.mockResolvedValue({ count: 1 });
+    mockIntentRetrieve.mockResolvedValue({ id: 'pi_123', status: 'processing' });
+
+    const result = await confirmStripeIntent(cfg, confirmParams);
+
+    expect(mockInvoiceUpdate).not.toHaveBeenCalled();
+    expect(result).toEqual({ outcome: 'in_flight' });
+    expect(mockPaymentUpdateMany).toHaveBeenCalledWith({
+      where: { id: 'pay_1', status: 'processing' },
+      data: { status: 'awaiting_confirmation' },
+    });
+  });
+
   it('returns in_flight and does not call Stripe when a concurrent confirm already claimed it', async () => {
     mockPaymentFindUnique.mockResolvedValueOnce({
       id: 'pay_1',
@@ -289,8 +316,14 @@ describe('confirmStripeIntent', () => {
 
 describe('cancelStripeIntent', () => {
   it('flips awaiting_confirmation to failed and reports cancelled', async () => {
+    mockPaymentFindFirst.mockResolvedValue({
+      id: 'pay_1',
+      providerRef: 'pi_123',
+      status: 'awaiting_confirmation',
+    });
     mockPaymentUpdateMany.mockResolvedValue({ count: 1 });
     const result = await cancelStripeIntent({ businessId: 'biz_1', invoiceId: 'inv_1', paymentId: 'pay_1' });
+    expect(mockIntentCancel).not.toHaveBeenCalled(); // no cfg → local-only
     expect(mockPaymentUpdateMany).toHaveBeenCalledWith({
       where: { id: 'pay_1', businessId: 'biz_1', invoiceId: 'inv_1', status: 'awaiting_confirmation' },
       data: { status: 'failed' },
@@ -298,9 +331,26 @@ describe('cancelStripeIntent', () => {
     expect(result).toEqual({ cancelled: true });
   });
 
+  it('best-effort cancels the PaymentIntent at Stripe when cfg is provided', async () => {
+    mockPaymentFindFirst.mockResolvedValue({
+      id: 'pay_1',
+      providerRef: 'pi_123',
+      status: 'awaiting_confirmation',
+    });
+    mockIntentCancel.mockResolvedValue({ id: 'pi_123', status: 'canceled' });
+    mockPaymentUpdateMany.mockResolvedValue({ count: 1 });
+    const result = await cancelStripeIntent(
+      { businessId: 'biz_1', invoiceId: 'inv_1', paymentId: 'pay_1' },
+      cfg,
+    );
+    expect(mockIntentCancel).toHaveBeenCalledWith('pi_123');
+    expect(result).toEqual({ cancelled: true });
+  });
+
   it('no-ops when the row is not in awaiting_confirmation (e.g. already processing or succeeded)', async () => {
-    mockPaymentUpdateMany.mockResolvedValue({ count: 0 });
+    mockPaymentFindFirst.mockResolvedValue(null);
     const result = await cancelStripeIntent({ businessId: 'biz_1', invoiceId: 'inv_1', paymentId: 'pay_1' });
+    expect(mockPaymentUpdateMany).not.toHaveBeenCalled();
     expect(result).toEqual({ cancelled: false });
   });
 });

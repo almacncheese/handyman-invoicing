@@ -117,7 +117,26 @@ export function StripeCardForm({
         },
       });
 
-      if (stripeError || paymentIntent?.status !== 'succeeded') {
+      // Do not cancel intermediate statuses (processing / requires_action) — money
+      // may still settle; only cancel definitive declines / abandonments.
+      const piStatus = paymentIntent?.status;
+      if (piStatus === 'processing') {
+        const confirmRes = await fetch(confirmEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentId }),
+        });
+        if (confirmRes.ok) {
+          const confirmData = await confirmRes.json();
+          onSuccess(confirmData.payment);
+          return;
+        }
+        setError('Payment is still processing — check with the contractor before retrying');
+        setBusy(false);
+        return;
+      }
+
+      if (stripeError || piStatus !== 'succeeded') {
         await fetch(confirmEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
