@@ -58,9 +58,10 @@ fi
 # Drop local copies older than RETAIN_DAYS
 find "$BACKUP_DIR" -name 'handyquote-*.sql.gz' -type f -mtime "+${RETAIN_DAYS}" -delete 2>/dev/null || true
 
-# Optional: copy off-box if RCLONE_REMOTE is set (e.g. b2:handyquote-backups)
+# Optional: copy off-box if RCLONE_REMOTE is set (e.g. r2:handyquote-backups).
+# R2 via rclone often returns a one-shot 501 then succeeds — allow retries.
 if [[ -n "${RCLONE_REMOTE:-}" ]] && command -v rclone >/dev/null 2>&1; then
-  rclone copy "$OUT" "$RCLONE_REMOTE/"
+  rclone copy "$OUT" "$RCLONE_REMOTE/" --retries 5 --low-level-retries 10
   echo "Uploaded to $RCLONE_REMOTE"
 fi
 

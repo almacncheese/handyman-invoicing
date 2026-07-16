@@ -27,13 +27,15 @@ Portfolio gate: `~/dev/_PRE-LIVE-GATE.md`.
 - [x] Quote numbers via atomic `increment`; invoice numbers under business row lock
 - [x] List pagination (`page` meta) on quotes / invoices / customers
 - [x] GitHub Actions CI (`npm test` + typecheck + build)
-- [x] Backup script + **VPS cron installed** (`/opt/handyquote-backup.sh`, 03:15 UTC); optional off-box rclone
+- [x] Backup script + **VPS cron installed** (`/opt/handyquote-backup.sh`, 03:15 UTC)
+- [x] **Off-box backups** → `r2:handyquote-backups` (2026-07-15)
 - [x] Photo count/size guards enforced on quote write + upload (`preparePhotosForWrite`)
+- [x] **R2 photo storage LIVE** (`handyquote-photos` + public r2.dev URL; Coolify `R2_*`) (2026-07-15)
 - [x] Public estimate GET rate-limited
 - [x] `error.tsx` + `global-error.tsx` recovery UI
 - [ ] Full route-level integration tests (lib tests + CI cover criticals; e2e still thin)
 - [x] Per-tenant card gateways (AuthNet/Stripe/Square/PayPal) built 2026-07-14; audit fixes 2026-07-15 — see `docs/AUDIT-2026-07-15.md`
-- [ ] Coolify `ENCRYPTION_KEY` + sandbox E2E per processor before real card money
+- [x] Coolify `ENCRYPTION_KEY` set (2026-07-15); sandbox E2E per processor still open
 - [ ] Pro Stripe checkout awaiting platform keys (`STRIPE_*`)
 - [ ] Third-party error tracking SDK (Sentry etc.) — console structured log only for now
 

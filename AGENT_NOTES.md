@@ -108,9 +108,10 @@ Platform admin: `owner@smithwebco.com` (password in Keychain `handyquote_platfor
 - **Per-tenant card charging (4 processors, contractor phone-entry + public customer self-serve) built 2026-07-14; audit harden 2026-07-15** (`docs/AUDIT-2026-07-15.md`) — still awaiting `ENCRYPTION_KEY` in Coolify + real contractor credentials. Settings UI: all four processors self-serve (owner). Nothing charges a real card until a contractor configures their own processor via Settings.
 - **Pro subscription checkout (HandyQuote → contractor) built 2026-07-13, awaiting real Stripe keys** — see "Stripe subscription billing" section below. Code path is live and tested; nothing charges real money until `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET`/`STRIPE_PRICE_ID` are set.
 - **Resend from-domain:** still onboarding@resend.dev until `quickhandyquote.com` verified in Resend (SPF/DKIM)
-- Photos: R2 optional — needs Coolify `R2_*` env (code ready; see Photo object storage section)
+- Photos: R2 **configured 2026-07-15** — see Photo object storage section; confirm `storage:r2` after restart deploy
 - Rate limits are in-process (per container); fine for single Coolify replica. `clientIp()` no longer trusts `cf-connecting-ip` (fixed 2026-07-13 — this deployment has no Cloudflare in front, so that header was attacker-controlled, not proxy-verified; don't re-add that trust without an actual CF proxy in front, verified against the real nginx config).
-- **Backup cron LIVE on VPS** (2026-07-12): `/opt/handyquote-backup.sh` + `/etc/cron.d/handyquote-backup` (03:15 UTC daily); dumps in `/var/backups/handyquote/` (14d retain). First dump verified. Off-box (`RCLONE_REMOTE`) still optional.
+- **Backup cron LIVE on VPS** (2026-07-12; off-box 2026-07-15): `/opt/handyquote-backup.sh` + `/etc/cron.d/handyquote-backup` (03:15 UTC daily); local dumps `/var/backups/handyquote/` (14d retain); **off-box `RCLONE_REMOTE=r2:handyquote-backups`**. Rclone may log one 501 then succeed (R2 quirk).
+- **Photos R2** (2026-07-15): bucket `handyquote-photos`, public `https://pub-a21160b4ea8a4966bcffb7a2044e7e21.r2.dev`; Coolify runtime `R2_*` env. `GET /api/uploads/photo` should report `storage:r2` after deploy.
 - Route-level e2e still thin (lib tests + CI green) — exceptions: the Stripe billing webhook route and the entire payment-gateway stack (crypto, gateway-config, all 4 provider modules, card-charge's shared claim/settle primitives, all 6 charge/intent/confirm routes across both contexts, the settings route) have dedicated TDD coverage — ~115 tests just for payments.
 
 ## Per-tenant payment gateways (Authorize.net / Stripe / Square / PayPal)
@@ -164,17 +165,16 @@ Platform admin: `owner@smithwebco.com` (password in Keychain `handyquote_platfor
 
 ## Photo object storage (R2)
 
-1. Cloudflare dashboard → R2 → Create bucket e.g. `handyquote-photos`
-2. Enable public access (custom domain or R2.dev public URL)
-3. Manage R2 API Tokens → create S3-compatible token with Object Read & Write
-4. Coolify env on handyquote app:
-   - `R2_ACCOUNT_ID`
-   - `R2_ACCESS_KEY_ID`
-   - `R2_SECRET_ACCESS_KEY`
-   - `R2_BUCKET_NAME`
-   - `R2_PUBLIC_URL` (no trailing slash)
-5. Redeploy. `GET /api/uploads/photo` returns `{ configured: true, storage: "r2" }`
-6. Without env: photos still save as inline data URLs (works, DB-heavy)
+**LIVE 2026-07-15** (Al account `6fbb8ad79c3c6d899245a786cdc24476`):
+
+| Piece | Value |
+|-------|--------|
+| Bucket | `handyquote-photos` |
+| Public base | `https://pub-a21160b4ea8a4966bcffb7a2044e7e21.r2.dev` (r2.dev public access enabled) |
+| Coolify env | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL` (runtime-only; keys from VPS rclone `r2:` remote) |
+| Check | `GET /api/uploads/photo` → `{ configured: true, storage: "r2" }` |
+
+Without env: photos still save as inline data URLs (works, DB-heavy). Re-create public URL if disabled: `CLOUDFLARE_ACCOUNT_ID=… wrangler r2 bucket dev-url enable handyquote-photos`.
 
 ## Reports
 

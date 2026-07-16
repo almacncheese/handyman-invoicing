@@ -53,7 +53,21 @@ Runtime-only preferred for secrets (not build-time).
 | `ALLOW_MOCK_PAYMENTS` | `true` while mock |
 | `RESEND_API_KEY` | for email |
 | `RESEND_FROM_EMAIL` | for email |
-| `R2_*` | optional photos |
+| `R2_ACCOUNT_ID` | photos (LIVE 2026-07-15) |
+| `R2_ACCESS_KEY_ID` | photos |
+| `R2_SECRET_ACCESS_KEY` | photos |
+| `R2_BUCKET_NAME` | `handyquote-photos` |
+| `R2_PUBLIC_URL` | r2.dev public base |
+| `ENCRYPTION_KEY` | per-tenant payment gateway crypto |
+
+## Off-box backups
+
+| Piece | Value |
+|-------|--------|
+| Local | `/var/backups/handyquote/` via `/opt/handyquote-backup.sh` |
+| Cron | `/etc/cron.d/handyquote-backup` 03:15 UTC |
+| R2 bucket | `handyquote-backups` |
+| Remote | `RCLONE_REMOTE=r2:handyquote-backups` (VPS rclone `r2:` remote) |
 
 ## VPS emergency files (root only)
 

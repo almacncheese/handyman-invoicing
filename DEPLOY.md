@@ -84,6 +84,7 @@ A single Docker volume is **not** a backup.
 | Script | `/opt/handyquote-backup.sh` (from `scripts/backup-postgres.sh`) |
 | Cron | `/etc/cron.d/handyquote-backup` — `15 3 * * *` UTC daily |
 | Output | `/var/backups/handyquote/handyquote-*.sql.gz` (14-day retain) |
+| Off-box | `RCLONE_REMOTE=r2:handyquote-backups` (Cloudflare R2; live 2026-07-15) |
 | Log | `/var/log/handyquote-backup.log` |
 | Source | `docker exec handyquote-db pg_dump -U handyquote handyquote` |
 
