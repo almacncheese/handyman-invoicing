@@ -18,8 +18,8 @@ import {
 
 const prisma = new PrismaClient();
 
-const DEMO_EMAIL = process.env.SEED_DEMO_EMAIL || 'demo@quickhandyquote.com';
-const STAFF_EMAIL = process.env.SEED_STAFF_EMAIL || 'staff@quickhandyquote.com';
+const DEMO_EMAIL = process.env.SEED_DEMO_EMAIL || 'demo@ledgerly.app';
+const STAFF_EMAIL = process.env.SEED_STAFF_EMAIL || 'staff@ledgerly.app';
 const DEMO_PASSWORD = process.env.SEED_DEMO_PASSWORD || 'demo-demo-demo';
 const DEMO_SLUG_PREFIX = 'demo-handyman';
 

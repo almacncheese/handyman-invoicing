@@ -438,7 +438,7 @@ textarea {
 }
 
 .hq-appbar-inner {
-  max-width: 72rem;
+  max-width: 84rem;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -501,6 +501,7 @@ textarea {
   align-items: center;
   gap: 0.15rem;
   margin-left: 0.5rem;
+  padding-right: 0.75rem;
   flex: 1;
   min-width: 0;
 }

@@ -1,0 +1,32 @@
+{
+  "summary": "Verification pass of two fixes from iteration_2. BOTH FIXES CONFIRMED WORKING. (1) Nav overlap: at 1440x900 Settings.right=814.5, PRO.left=975.75 => gap=161px (was -31px). At 1280x800 Settings.right=766.5, PRO.left=863.75 => gap=97px. No overlap at either desktop width. Visual screenshots confirm clean layout. (2) Login with demo@ledgerly.app / demo-demo-demo successfully navigates to /dashboard. Landing hero and login helper both display 'demo@ledgerly.app' with zero occurrences of 'quickhandyquote' on either page. Smoke test: /dashboard (heading 'Estimates'), /invoices (heading 'Invoices'), /settings (heading 'Business settings') all render with no visible error elements.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Both open items from iteration_2 are resolved. AppShell PRO pill correctly deferred to >=1180px and app bar widened; primary nav no longer collides with the right cluster. Demo email domain is now consistently ledgerly.app across seed, login helper, and landing hero."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only requested)",
+    "frontend": "100% - all 4 requested checks pass"
+  },
+  "test_credentials": "Owner demo@ledgerly.app / demo-demo-demo verified via UI login and reaches /dashboard.",
+  "seed_data_creation": "None this iteration. (Previous iteration created TEST_UI_* records; not touched here.)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Ledgerly rebrand is fully complete. AppShell nav overlap is resolved via .hq-appbar-inner max-width 84rem + PRO pill hidden below 1180px. All prior flows verified in iteration_2 remain functional (login + core routes smoke-passed here). Preview URL: https://8a1fcd27-2686-4210-bc8e-4cecf5167001.preview.emergentagent.com",
+  "measurements": {
+    "nav_gap_1440": "161.2px (Settings.right=814.5, PRO.left=975.75) - PASS",
+    "nav_gap_1280": "97.2px (Settings.right=766.5, PRO.left=863.75) - PASS",
+    "login_redirect": "/login -> /dashboard - PASS",
+    "landing_hero_email": "demo@ledgerly.app - PASS",
+    "login_helper_email": "demo@ledgerly.app - PASS",
+    "quickhandyquote_occurrences": 0
+  }
+}

@@ -34,7 +34,7 @@ export default async function LoginPage({ searchParams }: Props) {
           </Link>
         </p>
         <p className="mt-3 text-center text-xs text-[var(--muted)]">
-          Demo: demo@quickhandyquote.com / demo-demo-demo
+          Demo: demo@ledgerly.app / demo-demo-demo
         </p>
       </div>
     </main>

@@ -59,7 +59,7 @@ export default async function HomePage() {
               </Link>
             </div>
             <p className="mkt-trust !text-white/45">
-              14-day free trial · Then $29/mo · Demo: demo@quickhandyquote.com
+              14-day free trial · Then $29/mo · Demo: demo@ledgerly.app
             </p>
           </div>
 

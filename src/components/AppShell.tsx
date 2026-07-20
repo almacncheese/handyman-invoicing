@@ -75,7 +75,7 @@ export function AppShell({
             {planLabel && (
               <Link
                 href="/billing"
-                className="hidden rounded-full px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-wide sm:inline-block"
+                className="hidden shrink-0 rounded-full px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-wide min-[1180px]:inline-block"
                 style={{
                   background: trialExpired ? 'var(--warn-soft)' : 'var(--pine-soft)',
                   color: trialExpired ? 'var(--warn)' : 'var(--pine-deep)',
