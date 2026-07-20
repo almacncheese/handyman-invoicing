@@ -254,14 +254,14 @@ async function main() {
     taxPercent: business.defaultTaxPct,
     depositPercent: 25,
   });
-  await prisma.quote.create({
+  const quote2 = await prisma.quote.create({
     data: {
       businessId: business.id,
       customerId: customer.id,
       number: formatQuoteNumber(business.quotePrefix, 2),
       title: 'Ceiling fan install',
       jobType: 'electrical',
-      status: 'sent',
+      status: 'invoiced',
       lineItems: lines2,
       photos: [],
       taxPercent: business.defaultTaxPct,
@@ -271,8 +271,25 @@ async function main() {
       totalCents: t2.totalCents,
       depositCents: t2.depositCents,
       publicToken: generatePublicToken(),
-      sentAt: new Date(),
+      sentAt: new Date(Date.now() - 3 * 86400000),
+      acceptedAt: new Date(Date.now() - 2 * 86400000),
+      signedName: customer.name,
       validUntil: new Date(Date.now() + 30 * 86400000),
+    },
+  });
+
+  await prisma.invoice.create({
+    data: {
+      businessId: business.id,
+      quoteId: quote2.id,
+      number: 'INV-00001',
+      status: 'open',
+      lineItems: lines2,
+      subtotalCents: t2.subtotalCents,
+      taxCents: t2.taxCents,
+      totalCents: t2.totalCents,
+      depositCents: t2.depositCents,
+      amountDueCents: t2.totalCents,
     },
   });
 

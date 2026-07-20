@@ -35,6 +35,14 @@ Workspace: **Northwind Studio** (plan=pro). Reseed: `cd /app && npm run db:seed`
 
 ## Done (2026-07-20)
 - Got the app running in-environment (installed/persisted Postgres, node proxy, production build).
+- **PDF export**: native PDFs (pdfkit) for estimates & invoices — authed routes `/api/quotes/[id]/pdf`,
+  `/api/invoices/[id]/pdf`, and public `/api/public/estimate/[token]/pdf`. Buttons on estimate/invoice detail + public estimate.
+  Note: pdfkit must stay in `serverExternalPackages` (next.config.ts) or it can't find its .afm font files.
+- **Recurring invoices**: schedule (weekly/monthly/quarterly/yearly) + "Generate next" clones quote+invoice. `src/lib/recurring.ts`.
+- **Payment reminders**: `/api/invoices/[id]/remind` emails the customer (Resend, fails soft) + logs activity + tracks count.
+- **Dashboard/analytics**: 6-month revenue bar chart on /reports; "Start from a template" example-estimate quick-start on the dashboard (`/api/quotes/from-preset`).
+- Schema additions to Invoice: recurring, recurInterval, recurNextAt, recurParentId, lastReminderAt, reminderCount.
+- All four verified via testing agent (iteration_5) — 8/8 UI checks pass. Seed now creates a demo invoice (INV-00001).
 - **Rebrand HandyQuote -> Ledgerly**: metadata, logo mark (indigo), wordmark, marketing/pricing/login/signup copy,
   emails, /api/health, error tags, demo email domain. 0 user-visible "HandyQuote" left.
 - **Generalized copy** from contractor-only to any business (hero, how-it-works, pricing).
@@ -46,8 +54,9 @@ Workspace: **Northwind Studio** (plan=pro). Reseed: `cd /app && npm run db:seed`
   12 industries in `src/lib/industry-presets.ts`; `POST /api/templates/presets` bulk-creates (idempotent by description). UI tested 100%.
 
 ## Backlog / Next
-- P1: Native PDF export for estimates & invoices (currently browser print).
-- P1: Recurring invoices + payment reminders (dunning).
-- P2: Dashboard analytics (revenue trends, aging report).
+- P2: Auto-run recurring generation via cron (currently manual "Generate next"); auto-reminders on overdue.
+- P2: Client portal (customer views all their estimates/invoices in one place).
+- P2: More industry example estimates (each preset can define a richer `example`).
+- Ops: real domain + env keys (Stripe/Resend/R2) for production; wire Pro checkout UI.
 - P2: Client portal (view all their estimates/invoices in one place).
 - Ops: real domain + env keys (Stripe/Resend/R2) for production; wire Pro checkout UI.
