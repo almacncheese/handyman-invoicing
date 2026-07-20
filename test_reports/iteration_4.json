@@ -1,0 +1,34 @@
+{
+  "summary": "Frontend-only verification of the Industry starter pack feature on the Price list (/catalog) page. All six requested checks pass. Login as demo@ledgerly.app succeeded. Price list nav loads /catalog with the Industry starter pack panel visible (industry-select + import-preset-btn). Selecting 'Painting' updated the button label to 'Add 5 starter items'. First import: import-result showed 'Added 5 items.' and catalog-list rows grew from 9 -> 14. Second import (idempotency): import-result showed 'All items from this pack are already in your price list.' and rows stayed at 14. Manual add (material) with a unique description appeared in catalog-list (rows 14 -> 15). Zero console errors during the whole flow. Layout is clean at 1440x900.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "CatalogManager.tsx and /api/templates/presets are well structured: idempotency is enforced server-side by comparing existing description (case-insensitive, trimmed) and the UI reflects the added/skipped counts correctly.",
+    "Minor UX polish (non-blocking): the success alert uses role='status' which is fine, but a subtle color distinction between 'added N items' and 'all already exist' could help scan-ability. Currently both render as alert-success."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend-only requested)",
+    "frontend": "100% - 6/6 requested checks pass"
+  },
+  "test_credentials": "Owner demo@ledgerly.app / demo-demo-demo used via UI login; landed on /dashboard.",
+  "seed_data_creation": "Imported the 'Painting' pack (5 items) into the Northwind Studio demo workspace, and added one TEST_UI_material_* item via the manual form. All persisted correctly in the price list.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Industry starter pack feature verified end-to-end via UI. After this run the demo workspace 'Northwind Studio' has the seeded items + prior 'freelance' pack + 'painting' pack (5 items) + one TEST_UI_material_* item, totaling 15 rows on /catalog. If another agent needs a clean industry to test, use 'plumbing', 'electrical', 'hvac' or any other unimported pack. Preview URL: https://8a1fcd27-2686-4210-bc8e-4cecf5167001.preview.emergentagent.com",
+  "measurements": {
+    "initial_rows": 9,
+    "rows_after_first_painting_import": 14,
+    "rows_after_second_painting_import": 14,
+    "rows_after_manual_material_add": 15,
+    "first_import_message": "Added 5 items.",
+    "second_import_message": "All items from this pack are already in your price list.",
+    "console_errors": 0
+  }
+}
