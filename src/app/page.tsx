@@ -34,17 +34,18 @@ export default async function HomePage() {
 
         <section className="mkt-hero !pt-6 !pb-16">
           <div>
-            <span className="mkt-kicker !bg-[rgba(62,207,154,0.15)] !text-[#3ecf9a]">
-              Field estimating software
+            <span className="mkt-kicker !bg-[rgba(129,140,248,0.16)] !text-[#a5b4fc]">
+              Invoicing & estimates
             </span>
             <h1 className="mkt-h1 !text-white">
-              Estimates that look
+              Get paid faster,
               <br />
-              as solid as the work.
+              look sharp doing it.
             </h1>
             <p className="mkt-lead !text-white/70">
-              Build line items with material margins and labor rates, send a branded link for
-              e-signature, then convert accepted work into invoices — from the truck or the shop.
+              Build itemized estimates, send a branded link for e-signature, then turn accepted
+              work into invoices and collect payment — for contractors, freelancers, agencies, and
+              any business that bills clients.
             </p>
             <div className="mkt-actions">
               <Link href="/signup" className="btn btn-primary !px-6 !text-base">
@@ -123,29 +124,30 @@ export default async function HomePage() {
 
       <section className="mkt-section bg-white">
         <p className="mkt-section-label">How it works</p>
-        <h2>From job walk to signed total</h2>
+        <h2>From first quote to money in the bank</h2>
         <div className="flow-strip">
           <div className="flow-step">
             <div className="flow-num">01 · Quote</div>
-            <h3>Price with real margins</h3>
+            <h3>Price it with real numbers</h3>
             <p>
-              Enter supplier cost and markup. Labor is hours × rate. Totals calculate on the
-              server — no spreadsheet drift.
+              Add line items with quantities, rates, materials, and margins. Totals calculate on
+              the server — no spreadsheet drift, no math mistakes.
             </p>
           </div>
           <div className="flow-step">
             <div className="flow-num">02 · Sign</div>
-            <h3>Customer e-signature</h3>
+            <h3>Client e-signature</h3>
             <p>
-              Send one link. They review line items and photos on their phone, then sign on the
-              spot.
+              Send one branded link. Your client reviews the details on any device and approves
+              with a signature on the spot.
             </p>
           </div>
           <div className="flow-step">
             <div className="flow-num">03 · Invoice</div>
-            <h3>Convert and collect</h3>
+            <h3>Invoice and collect</h3>
             <p>
-              Accepted estimates become invoices. Record cash, check, or Zelle when payment lands.
+              Accepted estimates become invoices in one click. Take card payments or record cash,
+              check, and transfers as they land.
             </p>
           </div>
         </div>
@@ -154,7 +156,7 @@ export default async function HomePage() {
       <section className="mkt-cta-band">
         <div className="inner">
           <div>
-            <h2>Ready when your next walkthrough is.</h2>
+            <h2>Ready for your next client?</h2>
             <p>14-day free trial. Then Pro at $29/mo — no free forever plan.</p>
           </div>
           <Link href="/signup" className="btn btn-primary !px-6">

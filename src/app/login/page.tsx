@@ -15,7 +15,7 @@ export default async function LoginPage({ searchParams }: Props) {
           href="/"
           className="mb-5 flex items-center justify-center gap-1.5 text-sm font-medium text-[var(--muted)]"
         >
-          <span aria-hidden>←</span> Back to HandyQuote
+          <span aria-hidden>←</span> Back to Ledgerly
         </Link>
         {expired && (
           <div className="mb-3 rounded-md border border-[#f9db8a] bg-[var(--warn-soft)] px-3 py-2 text-sm text-[var(--ink)]">

@@ -9,7 +9,7 @@ export default function SignupPage() {
           href="/"
           className="mb-4 block text-center text-sm font-medium text-[var(--muted)]"
         >
-          ← HandyQuote
+          ← Ledgerly
         </Link>
         <AuthForm mode="signup" />
       </div>

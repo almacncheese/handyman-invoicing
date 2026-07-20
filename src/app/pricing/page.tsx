@@ -24,7 +24,7 @@ export default function PricingPage() {
       <div className="mx-auto max-w-3xl px-5 py-12 sm:py-16">
         <p className="mkt-section-label">Pricing</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--ink)] sm:text-4xl">
-          One plan for working crews.
+          One simple plan.
         </h1>
         <p className="mt-3 max-w-xl text-lg text-[var(--muted)]">
           Full product for 14 days. Then Pro — no free-forever tier.
@@ -57,7 +57,7 @@ export default function PricingPage() {
                 <span className="font-bold text-[var(--pine)]">✓</span> Price list, photos, branding
               </li>
               <li className="flex gap-2">
-                <span className="font-bold text-[var(--pine)]">✓</span> Staff seats for your crew
+                <span className="font-bold text-[var(--pine)]">✓</span> Staff seats for your team
               </li>
               <li className="flex gap-2">
                 <span className="font-bold text-[var(--pine)]">✓</span> Manual payment tracking

@@ -1,0 +1,96 @@
+{
+  "summary": "Frontend-only testing of Ledgerly (Next.js). Verified marketing/pricing pages, login page, and — after authenticating via fetch() — dashboard, /quotes/new, /invoices, /customers, /catalog, /settings, /reports, /billing. Found ONE CRITICAL blocker: the login form does NOT hydrate in the browser, so clicking Sign In (or pressing Enter) submits the form as a native GET to /login, exposing the password in the URL query string and preventing login. Backend /api/auth/login is fine (returns 200 + hq_session cookie), so the failure is purely client-side hydration of AuthForm.tsx. Also found 3 leftover 'HandyQuote' strings still visible to users, and a nav overlap where the 'Settings' label is covered by the PRO badge / workspace pill at 1280–1440px.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "AuthForm (/login)",
+        "issue": "CRITICAL: Form does not hydrate — submits as native HTTP GET on click/Enter, resulting in URL like /login?email=demo%40quickhandyquote.com&password=demo-demo-demo. Password is leaked in URL/history and the API is never called. Verified via page.evaluate: after full networkidle + 8s wait, form has no __reactFiber/__reactProps keys and form.method is 'get'. Only 2 JS files are loaded (both Cloudflare challenge scripts) — the _next/static/chunks/src_components_*.js and src_app_login_page_tsx_*.js bundles are referenced in HTML but never fetched by the browser. Login works instantly if you call fetch('/api/auth/login', ...) manually, so backend/cookies are correct.",
+        "selector": "form (login page) / button[type='submit']",
+        "priority": "CRITICAL"
+      },
+      {
+        "component": "AppShell top nav",
+        "issue": "'Settings' nav item is visually overlapped by the PRO badge + 'WORKSPACE / Northwind Studio' pill at 1280px and 1440px viewport widths. Text is truncated to 'Se…'. Header layout needs more horizontal breathing room or the workspace/plan block should move.",
+        "selector": "header nav (data-testid missing)",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Login → dashboard",
+        "issue": "Because AuthForm is not hydrated, the standard user flow (fill email/password, click Sign In) cannot succeed. Everything downstream (creating estimate via UI, viewing invoices, etc.) is untestable via the actual UI until this is fixed. All checks were performed by first calling /api/auth/login through page.evaluate.",
+        "affected_selectors": ["form", "button[type='submit']", "input[name='email']", "input[name='password']"]
+      }
+    ],
+    "design_issues": [
+      {
+        "screen": "Authenticated top nav (all app pages)",
+        "issues": [
+          "Settings link overlapped by PRO badge and workspace pill at 1280–1440px viewports",
+          "'PRO' pill is stuck flush against/inside the 'Settings' text — needs spacing or reorder"
+        ]
+      },
+      {
+        "screen": "Login page footer text",
+        "issues": [
+          "Demo credential line still reads 'demo@quickhandyquote.com / demo-demo-demo' — visible reference to old brand domain. Consider swapping the demo email domain to something on-brand (e.g. demo@ledgerly.app) for consistency."
+        ]
+      }
+    ],
+    "branding_leftovers_visible_to_users": [
+      {
+        "location": "/billing page",
+        "text": "Manage your HandyQuote Pro subscription.",
+        "file": "/app/src/app/billing/page.tsx:28"
+      },
+      {
+        "location": "PublicEstimate footer (shown on /e/[token] client-facing pages)",
+        "text": "Powered by HandyQuote",
+        "file": "/app/src/components/PublicEstimate.tsx:517"
+      },
+      {
+        "location": "PaymentGatewaySettings copy (Settings > payments tab)",
+        "text": "…into it, never through HandyQuote.",
+        "file": "/app/src/components/PaymentGatewaySettings.tsx:92"
+      },
+      {
+        "location": "Landing hero trust line and login helper",
+        "text": "Demo: demo@quickhandyquote.com",
+        "file": "/app/src/app/page.tsx:62, /app/src/app/login/page.tsx:37"
+      }
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "HIGHEST: Diagnose and fix client hydration for /login. Verify: (a) Turbopack dev bundle emits proper client component chunks for AuthForm; (b) the AuthForm 'use client' directive still resolves after the recent rebrand; (c) that the /_next/static/chunks URLs return valid JS (they do via curl, so likely a page-level issue). As a defensive fallback, make AuthForm's <form> also include method='POST' action='/api/auth/login' so that even without JS the credentials aren't sent as GET/query string.",
+    "HIGH: Replace remaining visible 'HandyQuote' strings with 'Ledgerly': /app/src/app/billing/page.tsx line 28, /app/src/components/PublicEstimate.tsx line 517, /app/src/components/PaymentGatewaySettings.tsx line 92.",
+    "MEDIUM: Fix top nav overlap so 'Settings' isn't clipped by PRO badge / workspace pill on desktop (1280–1440px).",
+    "LOW: Consider re-branding demo email domain shown on landing + login (demo@quickhandyquote.com → e.g. demo@ledgerly.app). Update /prisma/seed.ts DEMO_EMAIL/STAFF_EMAIL defaults and the copy in /app/src/app/page.tsx and /app/src/app/login/page.tsx.",
+    "LOW (cleanup): Internal-only 'HandyQuote' references in comments/console logs/config (calculations.ts, config.ts, stripe.ts, billing.ts, error.tsx, api/billing/checkout, api/stripe/webhook, api/health, BrandLogo comment). Not user-visible but worth cleaning for a full rebrand. Also /api/health returns service:'handyquote' — external monitors may care."
+  ],
+  "critical_code_review_comments": [
+    "SECURITY: The login form silently degrades to a native GET submission when JS is missing/not hydrated. Because the <form> has no method='POST' and no action, credentials appear in the URL (browser history, server access logs). AuthForm.tsx should render <form method='POST' action='/api/auth/login'> so the no-JS fallback is at least safe, and the onSubmit handler prevents default only after hydration.",
+    "Session cookie hq_session is set with secure: process.env.NODE_ENV === 'production'. In this preview env NODE_ENV is not 'production' so the cookie is HTTPS-served without Secure flag. Browsers accept it, but modern SameSite=None flows would fail; consider setting secure:true whenever the request is HTTPS (or introducing a FORCE_SECURE_COOKIES env).",
+    "Rebrand is incomplete: 8 source files under src/ still reference 'HandyQuote' — 3 of which render user-visible text (billing page, PublicEstimate footer, PaymentGatewaySettings copy). /api/health also returns service:'handyquote'.",
+    "AppShell/top nav lacks responsive spacing between primary nav links and the workspace/plan block, causing overlap at common desktop widths. Suggest wrapping the nav in flex-1 min-w-0 and moving the workspace pill to a right-side cluster with shrink-0."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend-only requested)",
+    "frontend": "60% — 6/10 requested user-flow test items fully pass via UI. Login through the UI is blocked (item 1) which cascades to items 3, 4, 5, 6, 7, 8, 9 being unreachable via real user gestures; those pages were only validated by injecting a session via fetch()."
+  },
+  "test_credentials": "Demo owner: demo@quickhandyquote.com / demo-demo-demo (works only via /api/auth/login — UI login is broken). Staff: staff@quickhandyquote.com / demo-demo-demo (not tested). /app/memory/test_credentials.md is missing.",
+  "seed_data_creation": "None. Used the pre-seeded 'Northwind Studio' business (2 quotes: EST-0001 Back deck repair DRAFT, EST-0002 Ceiling fan install SENT). No invoices seeded, so /invoices detail flow and estimate→invoice conversion (accepted-status required) could not be exercised.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Login form on /login is broken because AuthForm.tsx is not hydrating — the referenced /_next/static/chunks/src_components_*.js bundles are never fetched by the browser even though they return 200 via curl. To reach any authenticated page you must first log in via page.evaluate(async () => fetch('/api/auth/login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email:'demo@quickhandyquote.com', password:'demo-demo-demo'}), credentials:'include'})). Once the hydration bug is fixed, retest: (1) real UI login → /dashboard, (2) create estimate through QuoteBuilder end-to-end (Add Material, Add Labor, save), (3) accept a quote then convert to invoice, (4) create a new customer, (5) add a line template on /catalog, (6) save business profile on /settings. Also confirm no 'HandyQuote' visible text remains after the string fixes.",
+  "rca_of_the_issue": {
+    "reproduction": "1) Load https://8a1fcd27-2686-4210-bc8e-4cecf5167001.preview.emergentagent.com/login. 2) Fill inputs email=demo@quickhandyquote.com, password=demo-demo-demo. 3) Click 'Sign in' (or press Enter). Observed: URL becomes /login?email=demo%40quickhandyquote.com&password=demo-demo-demo — no POST /api/auth/login is fired.",
+    "root_cause": "AuthForm ('use client') is not hydrated by the time the user submits — and possibly not at all in the preview browser. page.evaluate() confirms the <form> DOM node has no React fiber/props keys after 10s of wait. The client chunk src_app_login_page_tsx_*.js is never requested by the browser (0 next chunk requests observed) even though it's referenced in the HTML and returns 200 via direct curl. Root cause candidates: (a) Turbopack dev-mode hydration failing silently because the HMR websocket is 502ing (Kubernetes ingress doesn't upgrade WS), and Next 16 dev mode may block full page interactivity if HMR bootstrap fails; (b) the mixed Cloudflare challenge platform script blocking further script execution in some paths.",
+    "mitigation": "Two fixes: (1) Immediate/defensive: change AuthForm's <form> to include method='POST' action='/api/auth/login' so that the no-JS/no-hydration path still POSTs credentials (and doesn't leak them in URL). Server route already returns JSON; you may need a small enhancement to accept form-encoded body OR return a 303 redirect to /dashboard on success for the progressive-enhancement path. (2) Real fix: ensure Next.js dev/Turbopack hydration works behind the ingress — either (a) proxy the /_next/webpack-hmr websocket properly, or (b) run Next in production mode (next build && next start) for the preview, so hydration doesn't depend on HMR bootstrap."
+  }
+}

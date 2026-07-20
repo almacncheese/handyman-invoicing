@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
-import { IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google';
+import { IBM_Plex_Sans, IBM_Plex_Mono, Bricolage_Grotesque } from 'next/font/google';
 import './globals.css';
 
 /**
- * IBM Plex — designed by Mike Abbink / Bold Monday for IBM's product systems.
- * Enterprise-grade readability; not the Inter/Geist starter-kit default.
+ * IBM Plex — enterprise-grade readability for dense ledger UI.
+ * Bricolage Grotesque — characterful display face for headings/brand.
  */
 const body = IBM_Plex_Sans({
   variable: '--font-body',
@@ -20,23 +20,29 @@ const mono = IBM_Plex_Mono({
   display: 'swap',
 });
 
+const display = Bricolage_Grotesque({
+  variable: '--font-display',
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  display: 'swap',
+});
+
 // Apply the actual family on <body> so UI never falls back to unstyled system text
 // when only the CSS variable is set.
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.APP_URL || process.env.NEXTAUTH_URL || 'https://quickhandyquote.com'
+    process.env.APP_URL || process.env.NEXTAUTH_URL || 'https://ledgerly.app'
   ),
-  title: 'HandyQuote — Estimates for field contractors',
+  title: 'Ledgerly — Estimates & invoices for any business',
   description:
-    'Create professional estimates, collect e-signatures, and track invoices. Built for handymen and field crews.',
+    'Build professional estimates, collect e-signatures, send invoices, and get paid. For contractors, freelancers, agencies, and any business that bills clients.',
   icons: {
     icon: [{ url: '/brand/logo-mark.svg', type: 'image/svg+xml' }],
     apple: [{ url: '/brand/logo-mark-rich.jpg' }],
   },
   other: {
-    // Cache-bust marker so you can confirm the latest UI build in view-source
-    'hq-ui': 'v5-brand-2026-07-11',
+    'lg-ui': 'v6-ledgerly-2026-07',
   },
 };
 
@@ -45,11 +51,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Keep root layout minimal — custom <head>/inline scripts here have broken
-  // Docker/prod prerender of Next's /_global-error (useContext null) on Next 16.
   return (
     <html lang="en">
-      <body className={`${body.variable} ${mono.variable} ${body.className}`}>{children}</body>
+      <body className={`${body.variable} ${mono.variable} ${display.variable} ${body.className}`}>
+        {children}
+      </body>
     </html>
   );
 }

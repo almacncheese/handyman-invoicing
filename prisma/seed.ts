@@ -86,9 +86,9 @@ async function main() {
 
   const business = await prisma.business.create({
     data: {
-      name: 'Demo Handyman Co',
+      name: 'Northwind Studio',
       slug: DEMO_SLUG_PREFIX,
-      primaryColor: '#0f5c4c',
+      primaryColor: '#4f46e5',
       phone: '(555) 010-2000',
       email: 'hello@demo-handyman.local',
       address: '100 Workshop Rd, Crowley, TX',
@@ -276,7 +276,7 @@ async function main() {
     },
   });
 
-  console.log('Seeded HandyQuote demo workspace (manual payments only)');
+  console.log('Seeded Ledgerly demo workspace');
   console.log(`  Owner: ${DEMO_EMAIL} / ${DEMO_PASSWORD}`);
   console.log(`  Staff: ${STAFF_EMAIL} / ${DEMO_PASSWORD}`);
   console.log(`  Sample total: $${(totals.totalCents / 100).toFixed(2)}`);

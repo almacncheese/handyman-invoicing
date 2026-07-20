@@ -49,7 +49,7 @@ export function appUrl(): string {
   return process.env.APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000';
 }
 
-/** Resend: set RESEND_API_KEY + RESEND_FROM_EMAIL in Coolify for production mail. */
+/** Resend: set RESEND_API_KEY + RESEND_FROM_EMAIL in production for mail. */
 export function getResendFrom(): string {
-  return process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM || 'HandyQuote <onboarding@resend.dev>';
+  return process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM || 'Ledgerly <onboarding@resend.dev>';
 }
