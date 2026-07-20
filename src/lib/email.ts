@@ -126,6 +126,42 @@ export async function sendEstimateEmail(opts: {
   });
 }
 
+export async function sendInvoiceReminderEmail(opts: {
+  to: string;
+  customerName?: string | null;
+  businessName: string;
+  invoiceNumber: string;
+  amountDueLabel: string;
+  shareUrl: string;
+  replyTo?: string | null;
+}): Promise<SendEmailResult> {
+  const greeting = opts.customerName ? `Hi ${escapeHtml(opts.customerName)},` : 'Hello,';
+  const html = layout({
+    title: `Payment reminder from ${escapeHtml(opts.businessName)}`,
+    bodyHtml: `
+      <p style="margin:0 0 12px;line-height:1.5;color:#1e293b;">${greeting}</p>
+      <p style="margin:0 0 12px;line-height:1.5;color:#1e293b;">
+        This is a friendly reminder that invoice <strong>${escapeHtml(opts.invoiceNumber)}</strong>
+        has a balance of <strong>${escapeHtml(opts.amountDueLabel)}</strong> due.
+      </p>
+      <p style="margin:0 0 20px;">
+        <a href="${escapeAttr(opts.shareUrl)}"
+           style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">
+          View &amp; pay
+        </a>
+      </p>
+      <p style="margin:0;font-size:13px;color:#64748b;word-break:break-all;">Or open: ${escapeHtml(opts.shareUrl)}</p>`,
+    footerNote: opts.businessName,
+  });
+  return sendEmail({
+    to: opts.to,
+    subject: `Reminder: invoice ${opts.invoiceNumber} — ${opts.amountDueLabel} due`,
+    html,
+    text: `Reminder: invoice ${opts.invoiceNumber} has ${opts.amountDueLabel} due. Pay: ${opts.shareUrl}`,
+    replyTo: opts.replyTo || undefined,
+  });
+}
+
 export async function sendStaffInviteEmail(opts: {
   to: string;
   name: string;

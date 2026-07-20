@@ -14,6 +14,8 @@ export type IndustryPreset = {
   label: string;
   blurb: string;
   items: PresetItem[];
+  /** A ready-to-edit example estimate a new user can create in one click. */
+  example?: { title: string; jobType: string; lines: PresetItem[] };
 };
 
 export const INDUSTRY_PRESETS: IndustryPreset[] = [

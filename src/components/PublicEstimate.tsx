@@ -510,7 +510,10 @@ export function PublicEstimate({
 
         <div className="flex justify-center gap-4 text-xs text-[var(--muted)]">
           <a href={`/e/${token}/print`} className="underline">
-            Print / PDF
+            Print
+          </a>
+          <a href={`/api/public/estimate/${token}/pdf`} className="underline" data-testid="public-download-pdf">
+            Download PDF
           </a>
           {estimate.business.phone && <span>{estimate.business.phone}</span>}
         </div>

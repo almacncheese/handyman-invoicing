@@ -197,6 +197,12 @@ model Invoice {
   amountPaidCents Int       @default(0)
   dueAt           DateTime?
   notes           String?   @db.Text
+  recurring       Boolean   @default(false)
+  recurInterval   String?   // weekly | monthly | quarterly | yearly
+  recurNextAt     DateTime?
+  recurParentId   String?
+  lastReminderAt  DateTime?
+  reminderCount   Int       @default(0)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

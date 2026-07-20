@@ -301,6 +301,13 @@ export function QuoteActions({
               Print / PDF
             </a>
           )}
+          <a
+            className="btn btn-ghost btn-sm"
+            href={`/api/quotes/${quoteId}/pdf`}
+            data-testid="download-estimate-pdf"
+          >
+            Download PDF
+          </a>
         </div>
 
         {shareUrl && (

@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db';
 import { AppShell } from '@/components/AppShell';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EstimateFilters } from '@/components/EstimateFilters';
+import { QuickStartTemplates } from '@/components/QuickStartTemplates';
 import { formatUsd } from '@/lib/money';
 import { resolveBilling } from '@/lib/billing';
 
@@ -87,6 +88,8 @@ export default async function DashboardPage({ searchParams }: Props) {
           New estimate
         </Link>
       </div>
+
+      <QuickStartTemplates />
 
       {needsSetup && (
         <div className="alert-tape mb-5">

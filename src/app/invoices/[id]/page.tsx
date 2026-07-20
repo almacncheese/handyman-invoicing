@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { AppShell } from '@/components/AppShell';
 import { formatUsd } from '@/lib/money';
 import { resolveBilling } from '@/lib/billing';
+import { InvoiceActions } from '@/components/InvoiceActions';
 import type { QuoteLineItem } from '@/lib/calculations';
 import { lineTotalCents } from '@/lib/calculations';
 
@@ -106,6 +107,17 @@ export default async function InvoiceDetailPage({ params }: Props) {
           </div>
         </div>
 
+        <div className="space-y-6">
+        <InvoiceActions
+          invoiceId={invoice.id}
+          status={invoice.status}
+          recurring={invoice.recurring}
+          recurInterval={invoice.recurInterval}
+          recurNextAt={invoice.recurNextAt ? invoice.recurNextAt.toISOString() : null}
+          lastReminderAt={invoice.lastReminderAt ? invoice.lastReminderAt.toISOString() : null}
+          reminderCount={invoice.reminderCount}
+          customerEmail={invoice.quote.customer?.email ?? null}
+        />
         <div className="panel h-fit">
           <div className="panel-head">
             <div>
@@ -135,6 +147,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
               Back to estimate
             </Link>
           </div>
+        </div>
         </div>
       </div>
     </AppShell>

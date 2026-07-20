@@ -67,6 +67,7 @@ export default async function ReportsPage() {
   const aging = arAging(invoices);
   const byMethod = paymentsByMethod(payments);
   const monthly = monthlySeries(payments, quotes, 6);
+  const maxCollected = Math.max(1, ...monthly.map((m) => m.collectedCents));
 
   const statusOrder = [
     'draft',
@@ -261,6 +262,25 @@ export default async function ReportsPage() {
 
         <section className="card p-5">
           <h2 className="text-sm font-semibold text-[var(--ink)]">Last 6 months</h2>
+          <div className="mt-4 flex h-28 items-end gap-2" data-testid="revenue-chart">
+            {monthly.map((m) => {
+              const pct = Math.round((m.collectedCents / maxCollected) * 100);
+              return (
+                <div key={m.key} className="flex flex-1 flex-col items-center gap-1">
+                  <div className="flex w-full flex-1 items-end">
+                    <div
+                      className="w-full rounded-t bg-[var(--pine)] transition-[height] duration-300"
+                      style={{ height: `${Math.max(pct, 2)}%` }}
+                      title={`${m.label}: ${formatUsd(m.collectedCents)}`}
+                    />
+                  </div>
+                  <span className="text-[0.6rem] font-medium text-[var(--muted)]">
+                    {m.label.split(' ')[0]}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
           <table className="mt-3 w-full text-left text-sm">
             <thead>
               <tr className="text-xs uppercase text-[var(--muted)]">

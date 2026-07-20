@@ -14,6 +14,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  serverExternalPackages: ['pdfkit'],
   allowedDevOrigins: ['*.preview.emergentagent.com', '*.emergentagent.com'],
   async headers() {
     return [
