@@ -12,7 +12,7 @@ export default function Error({
 }) {
   useEffect(() => {
     // Structured console for Coolify logs — no third-party SDK yet
-    console.error('[handyquote:error]', {
+    console.error('[ledgerly:error]', {
       message: error.message,
       digest: error.digest,
       name: error.name,

@@ -1,0 +1,1 @@
+/usr/lib/postgresql/15/bin/postgres "-D" "/app/.local/pgdata" "-c" "listen_addresses=127.0.0.1" "-p" "5432"

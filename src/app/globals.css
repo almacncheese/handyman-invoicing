@@ -514,8 +514,8 @@ textarea {
 .hq-appbar-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 0.7rem;
+  gap: 0.35rem;
+  padding: 0.45rem 0.6rem;
   border-radius: 6px;
   color: rgba(255, 255, 255, 0.72);
   font-size: 0.875rem;

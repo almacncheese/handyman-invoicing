@@ -62,6 +62,7 @@ export function AppShell({
                   href={item.href}
                   className="hq-appbar-link"
                   data-active={active(item.href)}
+                  data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   <Icon />
                   <span>{item.label}</span>
@@ -84,11 +85,11 @@ export function AppShell({
                 {planLabel}
               </Link>
             )}
-            <div className="hq-workspace hidden min-[1100px]:block">
+            <div className="hq-workspace hidden min-[1440px]:flex">
               <span className="hq-workspace-label">Workspace</span>
               <span className="hq-workspace-name">{businessName}</span>
             </div>
-            <Link href="/quotes/new" className="btn btn-primary btn-sm hq-appbar-cta">
+            <Link href="/quotes/new" className="btn btn-primary btn-sm hq-appbar-cta" data-testid="new-estimate-btn">
               New estimate
             </Link>
             <AccountMenu inverted />

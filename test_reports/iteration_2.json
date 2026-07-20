@@ -1,0 +1,48 @@
+{
+  "summary": "RETEST after iteration_1 fixes. CRITICAL LOGIN HYDRATION BUG IS FIXED — real UI login (type email+password, click Sign in) now navigates to /dashboard. All 11 requested flows pass end-to-end via real user gestures. The 'HandyQuote' branding leftovers (billing, PublicEstimate footer, PaymentGatewaySettings) are ALL fixed — 0 user-visible 'HandyQuote' text found across dashboard, /invoices, /customers, /catalog, /reports, /settings, /billing, /, /pricing. Estimate create + detail totals verified; new customer, new catalog item, and business profile save all persist across reload. One issue is NOT fixed: the top-nav 'Settings' label is STILL clipped by the PRO pill at every desktop width from 1280→1920 (gap = -31px). The claim in the request that this was fixed by deferring the workspace pill to ≥1440px did not resolve the overlap because the PRO pill (separate from the workspace pill) still sits inside/on top of the Settings link.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "AppShell top nav",
+        "issue": "'Settings' nav label is overlapped by the PRO pill at ALL tested desktop widths (1280, 1360, 1440, 1600, 1920). Measured: Settings-right at 1440 = 911px, PRO-left = 880px → 31px overlap. Visually renders as 'Settin' + PRO badge covering the 'gs'. The nav link's <a> is still clickable (the PRO pill does not block pointer events on the underlying anchor once you click the visible portion), but the label is truncated visually. iteration_1 flagged this at 1280–1440; it is now worse in the sense that it persists at 1600 and 1920 too. This bug was reported FIXED in the review request but is not fixed.",
+        "selector": "header a[data-testid=\"nav-settings\"] + a[href=\"/billing\"] (PRO pill)",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Login page + landing page hero",
+        "issues": [
+          "Demo credential line still reads 'demo@quickhandyquote.com / demo-demo-demo' — visible reference to old brand domain in the login helper text and landing hero '14-day free trial · Then $29/mo · Demo: demo@quickhandyquote.com'. Cosmetic — the seeded demo email retains the old domain."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "MEDIUM: Fix top-nav overlap between the /billing 'PRO' pill and the 'Settings' nav link. Suggestion: wrap the primary nav in flex-1 min-w-0 gap-x-6, put PRO pill + workspace pill + New estimate + Account in a right-side flex shrink-0 cluster with its own gap, and add pl-6 between nav and right cluster. Currently the PRO pill sits inline with the Settings <a> and overlaps by 31px.",
+    "LOW (cosmetic): Rebrand demo email domain shown on landing hero + login helper text (demo@quickhandyquote.com → demo@ledgerly.app). Update /prisma/seed.ts DEMO_EMAIL and copy in /app/src/app/page.tsx line ~62 and /app/src/app/login/page.tsx line ~37."
+  ],
+  "critical_code_review_comments": [
+    "Login hydration is now correct (production build via next start resolves it). Good fix.",
+    "All 3 previously-flagged 'HandyQuote' user-visible strings (billing page, PublicEstimate footer, PaymentGatewaySettings) are cleaned — verified across /billing, /settings payments tab, and login/dashboard/etc.",
+    "Nav layout fix in the review request only deferred the workspace pill, but the PRO pill (a separate element linking to /billing) was not repositioned and still overlaps the Settings nav item. Consider moving PRO into the right-side cluster next to 'New estimate' / Account and giving the primary nav flex-1 min-w-0."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend-only requested)",
+    "frontend": "100% functional (11/11 requested flows pass via real UI). 1 medium visual bug (nav overlap) still open; 1 low cosmetic (demo email domain)."
+  },
+  "test_credentials": "Owner demo@quickhandyquote.com / demo-demo-demo — verified working via UI login. Staff staff@quickhandyquote.com / demo-demo-demo — not exercised (owner covers all flows).",
+  "seed_data_creation": "Created via UI during test: 1 estimate 'TEST_UI_1621020' (EST-00003, $135.31, DRAFT, customer=Jordan Homeowner), 1 customer 'TEST_Cust_1621092', 1 price-list item 'TEST_Item_1621095'. These persist in the Postgres DB — main agent may want to reseed (cd /app && npm run db:seed) to clean.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Login hydration is FIXED. HandyQuote branding leftovers are FIXED. Only remaining open bug is the Settings-nav vs PRO-pill overlap in AppShell.tsx (31px overlap at all desktop widths). If main agent adjusts AppShell layout, just visually re-check header at 1280 and 1440. Test estimates listing shows EST-00003 (TEST_UI_*) — feel free to reseed. Preview URL: https://8a1fcd27-2686-4210-bc8e-4cecf5167001.preview.emergentagent.com",
+  "rca_of_the_issue": {
+    "reproduction": "Load /dashboard as authenticated user at 1440x900. Inspect header: measure the 'Settings' link's boundingClientRect.right vs the '/billing' PRO pill's boundingClientRect.x. Observed: Settings.right = 911, PRO.x = 880 → the PRO pill starts 31px before the Settings text ends, sitting on top of the last two characters ('gs').",
+    "root_cause": "In AppShell.tsx the PRO pill is a sibling of the nav <a> elements in the same flex container (not part of the right-side cluster). The 'defer workspace pill to ≥1440px' change addressed only the 'Northwind Studio' workspace label, not the PRO pill. There is no left margin / gap between the last nav link and PRO.",
+    "mitigation": "Restructure header into two flex clusters: [Logo] [primary-nav flex-1 min-w-0 flex gap-6] [right-cluster shrink-0 flex gap-3 items-center: PRO pill, workspace pill (>=1440), 'New estimate' CTA, Account menu]. Ensure primary nav container has pr-6 or the right cluster has pl-6."
+  }
+}

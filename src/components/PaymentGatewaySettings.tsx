@@ -89,7 +89,7 @@ export function PaymentGatewaySettings({ readOnly }: { readOnly: boolean }) {
           <h2 className="panel-title">Payment processor</h2>
           <p className="panel-sub">
             Bring your own Authorize.net, Stripe, Square, or PayPal account — customers pay directly
-            into it, never through HandyQuote.
+            into it, never through Ledgerly.
           </p>
         </div>
       </div>

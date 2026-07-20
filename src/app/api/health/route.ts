@@ -15,7 +15,7 @@ export async function GET() {
   return NextResponse.json(
     {
       ok,
-      service: 'handyquote',
+      service: 'ledgerly',
       db,
       time: new Date().toISOString(),
     },
