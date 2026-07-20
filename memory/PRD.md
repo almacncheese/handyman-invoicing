@@ -42,11 +42,12 @@ Workspace: **Northwind Studio** (plan=pro). Reseed: `cd /app && npm run db:seed`
 - **Fixes**: login hydration (prod build), top-nav overlap (widened app bar + PRO pill gated >=1180px),
   data-testids on nav.
 - Verified via testing agent: login + all core flows (estimate create/detail, invoice, customer, catalog, settings, reports) pass 100%.
+- **Industry starter packs** (`/catalog`): pick an industry, one-click import ready-made price-list items.
+  12 industries in `src/lib/industry-presets.ts`; `POST /api/templates/presets` bulk-creates (idempotent by description). UI tested 100%.
 
 ## Backlog / Next
 - P1: Native PDF export for estimates & invoices (currently browser print).
 - P1: Recurring invoices + payment reminders (dunning).
-- P2: Industry presets (line-item templates per trade/industry) to reinforce "any business".
 - P2: Dashboard analytics (revenue trends, aging report).
 - P2: Client portal (view all their estimates/invoices in one place).
 - Ops: real domain + env keys (Stripe/Resend/R2) for production; wire Pro checkout UI.
