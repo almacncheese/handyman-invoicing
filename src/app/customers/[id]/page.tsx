@@ -7,6 +7,9 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { CustomerEditForm } from '@/components/CustomerEditForm';
 import { formatUsd } from '@/lib/money';
 import { resolveBilling } from '@/lib/billing';
+import { generatePublicToken } from '@/lib/tokens';
+import { appUrl } from '@/lib/config';
+import { CustomerPortalLink } from '@/components/CustomerPortalLink';
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -26,6 +29,13 @@ export default async function CustomerDetailPage({ params }: Props) {
   ]);
 
   if (!customer || customer.businessId !== session.businessId) notFound();
+
+  let portalToken = customer.portalToken;
+  if (!portalToken) {
+    portalToken = generatePublicToken();
+    await prisma.customer.update({ where: { id: customer.id }, data: { portalToken } });
+  }
+  const portalUrl = `${appUrl()}/portal/${portalToken}`;
 
   const won = customer.quotes.filter((q) =>
     ['accepted', 'invoiced', 'paid'].includes(q.status),
@@ -76,6 +86,8 @@ export default async function CustomerDetailPage({ params }: Props) {
           <div className="metric-value">{formatUsd(pipeline)}</div>
         </div>
       </div>
+
+      <CustomerPortalLink portalUrl={portalUrl} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <CustomerEditForm

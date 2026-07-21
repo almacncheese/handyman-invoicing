@@ -136,6 +136,7 @@ async function main() {
   const customer = await prisma.customer.create({
     data: {
       businessId: business.id,
+      portalToken: generatePublicToken(),
       name: 'Jordan Homeowner',
       email: 'jordan@example.com',
       phone: '(555) 111-2222',
@@ -147,6 +148,7 @@ async function main() {
   await prisma.customer.create({
     data: {
       businessId: business.id,
+      portalToken: generatePublicToken(),
       name: 'Sam Rivera',
       phone: '(555) 333-4444',
       address: '18 Maple Ave',
@@ -290,6 +292,7 @@ async function main() {
       totalCents: t2.totalCents,
       depositCents: t2.depositCents,
       amountDueCents: t2.totalCents,
+      dueAt: new Date(Date.now() - 10 * 86400000),
     },
   });
 

@@ -104,9 +104,10 @@ model User {
 }
 
 model Customer {
-  id         String   @id @default(cuid())
-  businessId String
-  name       String
+  id          String   @id @default(cuid())
+  businessId  String
+  portalToken String?  @unique
+  name        String
   email      String?
   phone      String?
   address    String?

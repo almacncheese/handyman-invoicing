@@ -11,6 +11,7 @@ import {
   sumByJobType,
   sumByStatus,
 } from '@/lib/reporting';
+import { RunAutomations } from '@/components/RunAutomations';
 
 export default async function ReportsPage() {
   const { business, billing } = await requireWorkspace();
@@ -98,6 +99,16 @@ export default async function ReportsPage() {
         <Link href="/dashboard" className="btn btn-secondary">
           Estimates
         </Link>
+      </div>
+
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius)] border border-[var(--line)] bg-[var(--surface)] p-3.5">
+        <div>
+          <p className="text-sm font-semibold text-[var(--ink)]">Automations</p>
+          <p className="text-xs text-[var(--muted)]">
+            Generate due recurring invoices and send reminders for overdue balances.
+          </p>
+        </div>
+        <RunAutomations />
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">

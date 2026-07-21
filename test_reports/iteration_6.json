@@ -1,0 +1,45 @@
+{
+  "summary": "Frontend-only verification of Ledgerly's two new additions: (1) Customer Client Portal link (per-customer public URL) and (2) Reports > Run Automations. All 5 requested checks pass via real UI gestures against the production build at the preview URL. Login OK as demo@ledgerly.app. On /customers/{jordan}: customer-portal-card is rendered with portal-link-input (readonly=true) containing https://…/portal/wSEaa7Z-IYOJs73TbuNKmbhYtZITH47w and a Copy link button (data-testid=copy-portal-link) that toggles to 'Copied!' after click and reverts after ~1.8s. Portal URL opened in a fresh browser context with NO cookies returned HTTP 200 and rendered the public page containing 'Northwind Studio', 'Welcome, Jordan Homeowner.', portal-outstanding = '$292.28' (1 invoice · 0 open estimates), an Invoices section listing INV-00001 with a 'View & pay' link (href=/e/YV1LGt1vqaRUej_STjZ5gWbfcZx3fqkk) and a 'PDF' link (href=/api/public/estimate/YV1LGt1vqaRUej_STjZ5gWbfcZx3fqkk/pdf). Fetching the PDF href returned 200 application/pdf, 3119 bytes, starts with %PDF. Portal did NOT redirect to /login (public route confirmed). On /reports the Automations card is visible and run-automations-btn produces automations-msg = 'Generated 0 recurring invoices · sent 0 reminders.' — matches expected regex; 0 reminders is CORRECT due to the 7-day per-invoice cooldown (backend already sent 1 earlier per agent-context). Zero console errors and zero pageerror on customer detail, public portal, and reports pages.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "CustomerPortalLink.tsx: navigator.clipboard.writeText is wrapped in try/catch that silently swallows failures — good UX (button stays 'Copy link' if permission is denied in an obscure browser). Consider a fallback using document.execCommand('copy') on a selected input for maximum compatibility, but not a bug.",
+    "portal/[token]/page.tsx: uses inline styles instead of Tailwind — intentional for a brandable public page and avoids leaking app CSS classes; that's fine. Consider adding <html lang> / <title> via generateMetadata for SEO + accessibility on this public route (currently inherits root layout metadata).",
+    "portal/[token]/page.tsx: Section() receives children as React.ReactNode[] and calls children.length; if children is a single element (not an array) TS still allows it but at runtime .length would be undefined. In this file both sections always pass .map() arrays so it works, but the type-vs-runtime coupling is brittle — safer to use React.Children.toArray(children).length.",
+    "customers/[id]/page.tsx: portalToken lazy-generation writes to DB inside a GET render (side effect during SSR). Works but consider generating on customer create instead to keep the read path pure and avoid double-writes on concurrent first views."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend-only requested)",
+    "frontend": "100% - 5/5 requested checks pass"
+  },
+  "test_credentials": "Owner demo@ledgerly.app / demo-demo-demo (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "No new data created. Customer 'Jordan Homeowner' already had portalToken from prior render — reused as-is. Run automations was executed once; because a reminder for INV-00001 was already sent by an earlier backend curl, the 7-day cooldown produced 'sent 0 reminders' (correct behavior).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Test-ids in play: customer-portal-card, portal-link-input, copy-portal-link, portal-outstanding, run-automations-btn, automations-msg, nav-customers, nav-reports. IMPORTANT: The Copy button uses navigator.clipboard.writeText and Playwright browsers deny clipboard by default — grant clipboard-write via page.context.grant_permissions(['clipboard-read','clipboard-write']) BEFORE clicking, otherwise the copied state won't toggle (that's a test-env quirk, not a product bug). Portal route /portal/{token} is public; test with a fresh browser context (no cookies) to prove no-auth access. Preview URL: https://8a1fcd27-2686-4210-bc8e-4cecf5167001.preview.emergentagent.com.",
+  "measurements": {
+    "portal_token_pattern": "/portal/{token} — 32+ char base64url token confirmed",
+    "portal_link_readonly": true,
+    "copy_toggle": "Copy link -> Copied! (reverted after ~1.8s)",
+    "portal_status": 200,
+    "portal_business_name": "Northwind Studio",
+    "portal_outstanding": "$292.28",
+    "portal_invoice_shown": "INV-00001 with 'View & pay'",
+    "view_pay_href_prefix": "/e/",
+    "pdf_href_pattern": "/api/public/estimate/{token}/pdf",
+    "pdf_fetch": { "status": 200, "content_type": "application/pdf", "bytes": 3119, "starts_with_%PDF": true },
+    "automations_msg": "Generated 0 recurring invoices · sent 0 reminders.",
+    "automations_msg_matches_regex": true,
+    "console_errors_customer_detail": 0,
+    "console_errors_portal": 0,
+    "console_errors_reports": 0,
+    "pageerror_all_pages": 0
+  }
+}
