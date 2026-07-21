@@ -35,9 +35,10 @@ export function InvoiceActions({
 }: Props) {
   const router = useRouter();
   const [msg, setMsg] = useState<string | null>(null);
+  const [msgError, setMsgError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [recurring, setRecurring] = useState(recurringInit);
-  const [interval, setInterval] = useState(intervalInit || 'monthly');
+  const [recurEvery, setRecurEvery] = useState(intervalInit || 'monthly');
   const [nextAt, setNextAt] = useState(nextInit);
   const [reminders, setReminders] = useState(reminderCount);
   const [autoCharge, setAutoCharge] = useState(autoChargeInit);
@@ -46,6 +47,8 @@ export function InvoiceActions({
   const payable = status !== 'paid' && status !== 'void';
   const hasSaved = savedMethods.length > 0;
   const methodLabel = (m: SavedMethod) => `${m.brand || 'Card'} ···· ${m.last4 || '••••'}`;
+  const ok = (m: string) => { setMsg(m); setMsgError(false); };
+  const fail = (m: string) => { setMsg(m); setMsgError(true); };
 
   async function sendReminder() {
     setBusy(true);
@@ -69,14 +72,14 @@ export function InvoiceActions({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
       setReminders(data.reminderCount ?? reminders + 1);
-      setMsg(
+      ok(
         data.email?.sent
           ? `Reminder emailed to ${to}`
           : `Reminder logged (email ${data.email?.reason || 'not sent'})`,
       );
       router.refresh();
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : 'Failed');
+      fail(e instanceof Error ? e.message : 'Failed');
     } finally {
       setBusy(false);
     }
@@ -89,16 +92,16 @@ export function InvoiceActions({
       const res = await fetch(`/api/invoices/${invoiceId}/recurring`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled, interval }),
+        body: JSON.stringify({ enabled, interval: recurEvery }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
       setRecurring(data.recurring);
       setNextAt(data.recurNextAt || null);
-      setMsg(data.recurring ? 'Recurring schedule saved' : 'Recurring turned off');
+      ok(data.recurring ? 'Recurring schedule saved' : 'Recurring turned off');
       router.refresh();
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : 'Failed');
+      fail(e instanceof Error ? e.message : 'Failed');
     } finally {
       setBusy(false);
     }
@@ -114,7 +117,7 @@ export function InvoiceActions({
       router.push(`/invoices/${data.invoice.id}`);
       router.refresh();
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : 'Failed');
+      fail(e instanceof Error ? e.message : 'Failed');
       setBusy(false);
     }
   }
@@ -131,10 +134,10 @@ export function InvoiceActions({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
       setAutoCharge(data.autoCharge);
-      setMsg(data.autoCharge ? 'Auto-charge enabled for this schedule' : 'Auto-charge turned off');
+      ok(data.autoCharge ? 'Auto-charge enabled for this schedule' : 'Auto-charge turned off');
       router.refresh();
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : 'Failed');
+      fail(e instanceof Error ? e.message : 'Failed');
     } finally {
       setBusy(false);
     }
@@ -144,13 +147,17 @@ export function InvoiceActions({
     setBusy(true);
     setMsg(null);
     try {
-      const res = await fetch(`/api/invoices/${invoiceId}/charge-saved`, { method: 'POST' });
+      const res = await fetch(`/api/invoices/${invoiceId}/charge-saved`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(selectedMethod ? { savedMethodId: selectedMethod } : {}),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
-      setMsg('Saved card charged successfully');
+      ok('Saved card charged successfully');
       router.refresh();
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : 'Failed');
+      fail(e instanceof Error ? e.message : 'Failed');
     } finally {
       setBusy(false);
     }
@@ -194,7 +201,7 @@ export function InvoiceActions({
           {recurring ? (
             <>
               <p className="text-xs leading-relaxed text-[var(--muted)]">
-                Repeats <strong className="text-[var(--ink-2)]">{interval}</strong>
+                Repeats <strong className="text-[var(--ink-2)]">{recurEvery}</strong>
                 {nextAt ? ` · next on ${new Date(nextAt).toLocaleDateString()}` : ''}.
               </p>
               <div className="mt-2.5 flex flex-wrap gap-1.5">
@@ -226,8 +233,8 @@ export function InvoiceActions({
               <div className="mt-2.5 flex flex-wrap items-center gap-2">
                 <select
                   className="line-type"
-                  value={interval}
-                  onChange={(e) => setInterval(e.target.value)}
+                  value={recurEvery}
+                  onChange={(e) => setRecurEvery(e.target.value)}
                   data-testid="recur-interval-select"
                 >
                   {RECUR_INTERVALS.map((r) => (
@@ -310,7 +317,11 @@ export function InvoiceActions({
         )}
 
         {msg && (
-          <p className="alert alert-success" role="status" data-testid="invoice-action-msg">
+          <p
+            className={msgError ? 'alert alert-error' : 'alert alert-success'}
+            role="status"
+            data-testid="invoice-action-msg"
+          >
             {msg}
           </p>
         )}

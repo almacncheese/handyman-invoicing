@@ -14,18 +14,27 @@ export type AutoChargeResult =
   | { outcome: 'skipped'; reason: string }
   | { outcome: 'failed'; errorMessage: string };
 
-export async function autoChargeInvoice(invoiceId: string, businessId: string): Promise<AutoChargeResult> {
+export async function autoChargeInvoice(
+  invoiceId: string,
+  businessId: string,
+  overrideMethodId?: string,
+): Promise<AutoChargeResult> {
   const invoice = await prisma.invoice.findUnique({
     where: { id: invoiceId },
-    include: { quote: { select: { number: true } } },
+    include: { quote: { select: { number: true, customerId: true } } },
   });
   if (!invoice || invoice.businessId !== businessId) return { outcome: 'skipped', reason: 'not_found' };
   if (invoice.status === 'paid' || invoice.status === 'void') return { outcome: 'skipped', reason: 'not_payable' };
   if (invoice.amountDueCents <= 0) return { outcome: 'skipped', reason: 'no_balance' };
-  if (!invoice.savedMethodId) return { outcome: 'skipped', reason: 'no_saved_method' };
 
-  const method = await prisma.savedPaymentMethod.findUnique({ where: { id: invoice.savedMethodId } });
+  const methodId = overrideMethodId || invoice.savedMethodId;
+  if (!methodId) return { outcome: 'skipped', reason: 'no_saved_method' };
+
+  const method = await prisma.savedPaymentMethod.findUnique({ where: { id: methodId } });
   if (!method || method.businessId !== businessId) return { outcome: 'skipped', reason: 'method_missing' };
+  if (invoice.quote?.customerId && method.customerId !== invoice.quote.customerId) {
+    return { outcome: 'skipped', reason: 'method_mismatch' };
+  }
 
   const config = await loadGatewayConfig(businessId);
   if (!config || config.provider !== method.provider) {

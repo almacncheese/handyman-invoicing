@@ -45,6 +45,8 @@ Workspace: **Northwind Studio** (plan=pro). Reseed: `cd /app && npm run db:seed`
 - All four verified via testing agent (iteration_5) — 8/8 UI checks pass. Seed now creates a demo invoice (INV-00001).
 - **Client portal** (`/portal/[token]`, public): per-customer shareable link listing all their estimates & invoices with View/Pay (→ `/e/[token]`) + PDF links and an outstanding-balance summary. Portal token on Customer; link + copy button on customer detail. Verified 100% (iteration_6).
 - **Automations runner** (`/api/cron/run`, Reports → "Run automations"): generates due recurring invoices and sends overdue payment reminders (7-day cooldown). Verified 100%.
+- **Saved cards + auto-charge (Authorize.net CIM)**: customers can save a card on the public payment page (`saveCard` → `profile.createProfile` vaults it, stored in `SavedPaymentMethod`). On recurring invoices the business can auto-charge the saved card each cycle (`generateNextInvoice` → off-session `chargeStoredAuthNetProfile`) or "Charge now" on demand. Files: `lib/saved-methods.ts`, `lib/authnet.ts`, `api/invoices/[id]/auto-charge` & `/charge-saved`. UI verified 100% (iteration_7); all 38 payment unit tests still pass.
+  NOTE: real charges require a configured Authorize.net merchant account; the demo has none, so charges fail-closed with a clear reason (`gateway_mismatch`). Stripe off-session (SetupIntent) is a documented follow-up.
 - **Rebrand HandyQuote -> Ledgerly**: metadata, logo mark (indigo), wordmark, marketing/pricing/login/signup copy,
   emails, /api/health, error tags, demo email domain. 0 user-visible "HandyQuote" left.
 - **Generalized copy** from contractor-only to any business (hero, how-it-works, pricing).
@@ -56,9 +58,9 @@ Workspace: **Northwind Studio** (plan=pro). Reseed: `cd /app && npm run db:seed`
   12 industries in `src/lib/industry-presets.ts`; `POST /api/templates/presets` bulk-creates (idempotent by description). UI tested 100%.
 
 ## Backlog / Next
-- P2: Wire `/api/cron/run` to a real scheduler (external cron / webhook) for hands-off recurring + reminders.
-- P2: Portal enhancements — customer can download all-in-one statement, filter by paid/unpaid, generateMetadata/title.
-- P2: Per-industry richer `example` estimates (currently derived from first line items).
-- Ops: real domain + env keys (Stripe/Resend/R2) for production; wire Pro checkout UI.
+- P1: Stripe off-session saved cards (SetupIntent to vault + PaymentIntent off_session) mirroring the Authorize.net CIM flow.
+- P2: Wire `/api/cron/run` to a real scheduler (external cron / webhook) for hands-off recurring + reminders + auto-charge.
+- P2: Manage saved cards UI on the customer detail page (list/remove vaulted cards).
+- Ops: configure a real per-tenant Authorize.net/Stripe gateway to enable live charging; real domain + env keys (Resend/R2); Pro checkout UI.
 - P2: Client portal (view all their estimates/invoices in one place).
 - Ops: real domain + env keys (Stripe/Resend/R2) for production; wire Pro checkout UI.

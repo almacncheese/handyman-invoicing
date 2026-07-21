@@ -280,7 +280,7 @@ async function main() {
     },
   });
 
-  await prisma.invoice.create({
+  const demoInvoice = await prisma.invoice.create({
     data: {
       businessId: business.id,
       quoteId: quote2.id,
@@ -293,8 +293,26 @@ async function main() {
       depositCents: t2.depositCents,
       amountDueCents: t2.totalCents,
       dueAt: new Date(Date.now() - 10 * 86400000),
+      recurring: true,
+      recurInterval: 'monthly',
+      recurNextAt: new Date(Date.now() + 30 * 86400000),
     },
   });
+
+  // Demo saved card so the saved-card / auto-charge UI is visible.
+  // (No real gateway is configured, so it cannot actually be charged.)
+  await prisma.savedPaymentMethod.create({
+    data: {
+      businessId: business.id,
+      customerId: customer.id,
+      provider: 'authorize_net',
+      providerCustomerId: '9100000001',
+      providerMethodId: '9200000001',
+      brand: 'Visa',
+      last4: '1111',
+    },
+  });
+  void demoInvoice;
 
   console.log('Seeded Ledgerly demo workspace');
   console.log(`  Owner: ${DEMO_EMAIL} / ${DEMO_PASSWORD}`);
