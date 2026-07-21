@@ -43,6 +43,8 @@ Workspace: **Northwind Studio** (plan=pro). Reseed: `cd /app && npm run db:seed`
 - **Dashboard/analytics**: 6-month revenue bar chart on /reports; "Start from a template" example-estimate quick-start on the dashboard (`/api/quotes/from-preset`).
 - Schema additions to Invoice: recurring, recurInterval, recurNextAt, recurParentId, lastReminderAt, reminderCount.
 - All four verified via testing agent (iteration_5) — 8/8 UI checks pass. Seed now creates a demo invoice (INV-00001).
+- **Client portal** (`/portal/[token]`, public): per-customer shareable link listing all their estimates & invoices with View/Pay (→ `/e/[token]`) + PDF links and an outstanding-balance summary. Portal token on Customer; link + copy button on customer detail. Verified 100% (iteration_6).
+- **Automations runner** (`/api/cron/run`, Reports → "Run automations"): generates due recurring invoices and sends overdue payment reminders (7-day cooldown). Verified 100%.
 - **Rebrand HandyQuote -> Ledgerly**: metadata, logo mark (indigo), wordmark, marketing/pricing/login/signup copy,
   emails, /api/health, error tags, demo email domain. 0 user-visible "HandyQuote" left.
 - **Generalized copy** from contractor-only to any business (hero, how-it-works, pricing).
@@ -54,9 +56,9 @@ Workspace: **Northwind Studio** (plan=pro). Reseed: `cd /app && npm run db:seed`
   12 industries in `src/lib/industry-presets.ts`; `POST /api/templates/presets` bulk-creates (idempotent by description). UI tested 100%.
 
 ## Backlog / Next
-- P2: Auto-run recurring generation via cron (currently manual "Generate next"); auto-reminders on overdue.
-- P2: Client portal (customer views all their estimates/invoices in one place).
-- P2: More industry example estimates (each preset can define a richer `example`).
+- P2: Wire `/api/cron/run` to a real scheduler (external cron / webhook) for hands-off recurring + reminders.
+- P2: Portal enhancements — customer can download all-in-one statement, filter by paid/unpaid, generateMetadata/title.
+- P2: Per-industry richer `example` estimates (currently derived from first line items).
 - Ops: real domain + env keys (Stripe/Resend/R2) for production; wire Pro checkout UI.
 - P2: Client portal (view all their estimates/invoices in one place).
 - Ops: real domain + env keys (Stripe/Resend/R2) for production; wire Pro checkout UI.

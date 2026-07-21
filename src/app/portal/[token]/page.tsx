@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import React from 'react';
 import { prisma } from '@/lib/db';
 import { isValidPublicToken } from '@/lib/authz';
 import { formatUsd } from '@/lib/money';
@@ -128,14 +129,15 @@ export default async function ClientPortalPage({ params }: Props) {
   );
 }
 
-function Section({ title, empty, children }: { title: string; empty: string; children: React.ReactNode[] }) {
+function Section({ title, empty, children }: { title: string; empty: string; children: React.ReactNode }) {
+  const items = React.Children.toArray(children);
   return (
     <section style={{ marginBottom: 28 }}>
       <h2 style={{ fontSize: 14, fontWeight: 700, color: '#0b0f1e', margin: '0 0 10px' }}>{title}</h2>
-      {children.length === 0 ? (
+      {items.length === 0 ? (
         <p style={{ color: '#6b7194', fontSize: 14, margin: 0 }}>{empty}</p>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>{children}</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>{items}</div>
       )}
     </section>
   );
