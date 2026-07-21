@@ -50,3 +50,8 @@ next-env.d.ts
 # keep migrations; ignore local dbs if any
 *.db
 *.db-journal
+.env.*
+*.env
+credentials.json
+*.key
+.credentials

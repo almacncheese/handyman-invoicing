@@ -1,0 +1,41 @@
+{
+  "summary": "Frontend-only verification of the Ledgerly -> HandyQuote branding/domain revert. All requested checks PASS. Zero 'Ledgerly' text remains anywhere in the running app source (grep of /app *.ts/tsx/js/jsx/json/md finds hits only in historical test_reports/iteration_1..7.json). Zero 'Ledgerly' text found in any rendered page. Login works with demo@quickhandyquote.com / demo-demo-demo and lands on /dashboard. Landing hero shows 'Demo: demo@quickhandyquote.com'. Login page shows 'Back to HandyQuote' link plus 'Demo: demo@quickhandyquote.com / demo-demo-demo' hint. Signup page renders HandyQuote. Billing page shows 'Manage your HandyQuote Pro subscription.' Client portal footer shows 'Powered by HandyQuote'. Header wordmark reads 'HandyQuote' on dashboard, invoices, invoice-detail, customers, customer-detail, reports, billing. Customer detail shows the client portal link as https://<host>/portal/{token}. Zero console errors and zero page errors across landing, dashboard, invoices, /invoices/{id} (INV-00001 opened via row click), /customers, /customers/{id} (Jordan Homeowner), client portal, /reports and /billing. Browser <title> on landing = 'HandyQuote — Estimates & invoices for any business'. Only sample text mentioning 'Northwind Studio' is the demo tenant business name (as expected per the review note).",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "grep -ri 'ledgerly' /app --exclude-dir=.next --exclude-dir=node_modules --exclude-dir=test_reports returns zero results — revert is thorough. No stale references in src/, public/, prisma/, package.json, or any README."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend-only requested)",
+    "frontend": "100% - all 5 requested checks pass"
+  },
+  "test_credentials": "Owner demo@quickhandyquote.com / demo-demo-demo (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None. Used seeded INV-00001 and seeded customer 'Jordan Homeowner'. No state was mutated during this test.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Product name is HandyQuote, domain quickhandyquote.com. Demo tenant business is 'Northwind Studio' — that string is the SAMPLE customer business name and is not the product name, so its presence is expected, not a bug. Login: demo@quickhandyquote.com / demo-demo-demo. Preview URL: https://8a1fcd27-2686-4210-bc8e-4cecf5167001.preview.emergentagent.com. To reach invoice detail click the 'INV-00001' text (not the job title). Client portal link on customer detail is /portal/{token}. Payment gateway is not configured (fail-closed on charge is expected).",
+  "measurements": {
+    "landing_title": "HandyQuote — Estimates & invoices for any business",
+    "any_page_has_ledgerly_text": false,
+    "any_page_has_ledgerly_app_email": false,
+    "landing_has_demo_email_quickhandyquote": true,
+    "login_page_back_to_handyquote": true,
+    "login_page_demo_hint_quickhandyquote": true,
+    "signup_page_has_handyquote": true,
+    "billing_has_manage_handyquote_pro": true,
+    "portal_footer_powered_by_handyquote": true,
+    "login_success_landed_on_dashboard": true,
+    "invoice_INV00001_opens": true,
+    "customer_portal_link_format_is_/portal/{token}": true,
+    "reports_loads_ok": true,
+    "console_errors_total": 0,
+    "page_errors_total": 0
+  }
+}

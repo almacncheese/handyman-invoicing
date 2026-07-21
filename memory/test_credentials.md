@@ -1,4 +1,4 @@
-# Test Credentials — Ledgerly
+# Test Credentials — HandyQuote
 
 App runs as a Next.js production build (supervisor: `nextapp` on :3000, `apiproxy` node proxy on :8001, `dbboot` initializes Postgres in `/app/.local/pgdata`).
 
@@ -6,8 +6,8 @@ App runs as a Next.js production build (supervisor: `nextapp` on :3000, `apiprox
 
 | Role  | Email                        | Password        |
 |-------|------------------------------|-----------------|
-| Owner | demo@ledgerly.app            | demo-demo-demo  |
-| Staff | staff@ledgerly.app           | demo-demo-demo  |
+| Owner | demo@quickhandyquote.com            | demo-demo-demo  |
+| Staff | staff@quickhandyquote.com           | demo-demo-demo  |
 
 Demo workspace: **Northwind Studio** (plan = pro, so no trial walls).
 

@@ -32,9 +32,9 @@ const display = Bricolage_Grotesque({
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.APP_URL || process.env.NEXTAUTH_URL || 'https://ledgerly.app'
+    process.env.APP_URL || process.env.NEXTAUTH_URL || 'https://quickhandyquote.com'
   ),
-  title: 'Ledgerly — Estimates & invoices for any business',
+  title: 'HandyQuote — Estimates & invoices for any business',
   description:
     'Build professional estimates, collect e-signatures, send invoices, and get paid. For contractors, freelancers, agencies, and any business that bills clients.',
   icons: {
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     apple: [{ url: '/brand/logo-mark-rich.jpg' }],
   },
   other: {
-    'lg-ui': 'v6-ledgerly-2026-07',
+    'hq-ui': 'v6-handyquote-2026-07',
   },
 };
 

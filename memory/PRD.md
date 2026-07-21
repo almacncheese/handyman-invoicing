@@ -1,4 +1,4 @@
-# Ledgerly — Product Requirements & Working Doc
+# HandyQuote — Product Requirements & Working Doc
 
 ## Original problem statement
 "Look at my hand invoicing tool, want to make this better, from front end to backend
@@ -8,7 +8,7 @@ User choices: broad pass (frontend + backend), rebrand & generalize to any busin
 UI direction left to agent's discretion.
 
 ## What this is
-A multi-tenant SaaS (formerly **HandyQuote**, now **Ledgerly**) for estimates,
+A multi-tenant SaaS (formerly **HandyQuote**, now **HandyQuote**) for estimates,
 e-signature, invoices, and payments — repositioned from contractor-only to **any business**.
 
 ## Architecture
@@ -30,7 +30,7 @@ e-signature, invoices, and payments — repositioned from contractor-only to **a
 - After code changes you MUST rebuild: `cd /app && NODE_ENV=production npx next build --webpack` then `supervisorctl restart nextapp`.
 
 ## Demo credentials
-Owner `demo@ledgerly.app` / `demo-demo-demo`; Staff `staff@ledgerly.app` / `demo-demo-demo`.
+Owner `demo@quickhandyquote.com` / `demo-demo-demo`; Staff `staff@quickhandyquote.com` / `demo-demo-demo`.
 Workspace: **Northwind Studio** (plan=pro). Reseed: `cd /app && npm run db:seed`.
 
 ## Done (2026-07-20)
@@ -47,7 +47,7 @@ Workspace: **Northwind Studio** (plan=pro). Reseed: `cd /app && npm run db:seed`
 - **Automations runner** (`/api/cron/run`, Reports → "Run automations"): generates due recurring invoices and sends overdue payment reminders (7-day cooldown). Verified 100%.
 - **Saved cards + auto-charge (Authorize.net CIM)**: customers can save a card on the public payment page (`saveCard` → `profile.createProfile` vaults it, stored in `SavedPaymentMethod`). On recurring invoices the business can auto-charge the saved card each cycle (`generateNextInvoice` → off-session `chargeStoredAuthNetProfile`) or "Charge now" on demand. Files: `lib/saved-methods.ts`, `lib/authnet.ts`, `api/invoices/[id]/auto-charge` & `/charge-saved`. UI verified 100% (iteration_7); all 38 payment unit tests still pass.
   NOTE: real charges require a configured Authorize.net merchant account; the demo has none, so charges fail-closed with a clear reason (`gateway_mismatch`). Stripe off-session (SetupIntent) is a documented follow-up.
-- **Rebrand HandyQuote -> Ledgerly**: metadata, logo mark (indigo), wordmark, marketing/pricing/login/signup copy,
+- **Rebrand HandyQuote -> HandyQuote**: metadata, logo mark (indigo), wordmark, marketing/pricing/login/signup copy,
   emails, /api/health, error tags, demo email domain. 0 user-visible "HandyQuote" left.
 - **Generalized copy** from contractor-only to any business (hero, how-it-works, pricing).
 - **Visual refresh**: new indigo brand palette (was teal), Bricolage Grotesque display font, refreshed buttons/shadows.

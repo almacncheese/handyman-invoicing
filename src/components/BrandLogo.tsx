@@ -40,13 +40,13 @@ export function BrandLogo({
         priority
         unoptimized
       />
-      {!markOnly && <span className="hq-brand-word">Ledgerly</span>}
+      {!markOnly && <span className="hq-brand-word">HandyQuote</span>}
     </span>
   );
 
   if (href == null || href === '') return content;
   return (
-    <Link href={href} className="hq-brand-link" aria-label="Ledgerly home">
+    <Link href={href} className="hq-brand-link" aria-label="HandyQuote home">
       {content}
     </Link>
   );

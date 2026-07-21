@@ -14,7 +14,7 @@ function fromAddress(): string {
   return (
     process.env.RESEND_FROM_EMAIL?.trim() ||
     process.env.EMAIL_FROM?.trim() ||
-    'Ledgerly <onboarding@resend.dev>'
+    'HandyQuote <onboarding@resend.dev>'
   );
 }
 
@@ -72,14 +72,14 @@ function layout(opts: { title: string; bodyHtml: string; footerNote?: string }) 
     <tr><td align="center">
       <table role="presentation" width="100%" style="max-width:520px;background:#ffffff;border-radius:10px;border:1px solid #d0d7e2;overflow:hidden;">
         <tr><td style="background:#0f172a;padding:16px 20px;">
-          <span style="color:#fff;font-weight:700;font-size:16px;letter-spacing:-0.02em;">Ledgerly</span>
+          <span style="color:#fff;font-weight:700;font-size:16px;letter-spacing:-0.02em;">HandyQuote</span>
         </td></tr>
         <tr><td style="padding:24px 20px;">
           <h1 style="margin:0 0 12px;font-size:18px;font-weight:600;">${opts.title}</h1>
           ${opts.bodyHtml}
         </td></tr>
         <tr><td style="padding:0 20px 20px;font-size:12px;color:#64748b;">
-          ${opts.footerNote || 'Sent via Ledgerly'}
+          ${opts.footerNote || 'Sent via HandyQuote'}
         </td></tr>
       </table>
     </td></tr>
@@ -174,7 +174,7 @@ export async function sendStaffInviteEmail(opts: {
     bodyHtml: `
       <p style="margin:0 0 12px;line-height:1.5;">Hi ${escapeHtml(opts.name)},</p>
       <p style="margin:0 0 12px;line-height:1.5;">
-        You've been invited to <strong>${escapeHtml(opts.businessName)}</strong> on Ledgerly.
+        You've been invited to <strong>${escapeHtml(opts.businessName)}</strong> on HandyQuote.
       </p>
       <p style="margin:0 0 8px;line-height:1.5;">
         <strong>Email:</strong> ${escapeHtml(opts.to)}<br/>
@@ -190,7 +190,7 @@ export async function sendStaffInviteEmail(opts: {
   });
   return sendEmail({
     to: opts.to,
-    subject: `Invite: ${opts.businessName} on Ledgerly`,
+    subject: `Invite: ${opts.businessName} on HandyQuote`,
     html,
     text: `You've been invited to ${opts.businessName}. Login: ${loginUrl} Email: ${opts.to} Password: ${opts.tempPassword}`,
   });
@@ -208,7 +208,7 @@ export async function sendPasswordResetEmail(opts: {
         opts.name ? `Hi ${escapeHtml(opts.name)},` : 'Hello,'
       }</p>
       <p style="margin:0 0 16px;line-height:1.5;">
-        We received a request to reset your Ledgerly password. This link expires in 1 hour.
+        We received a request to reset your HandyQuote password. This link expires in 1 hour.
       </p>
       <p style="margin:0 0 16px;">
         <a href="${escapeAttr(opts.resetUrl)}"
@@ -220,7 +220,7 @@ export async function sendPasswordResetEmail(opts: {
   });
   return sendEmail({
     to: opts.to,
-    subject: 'Reset your Ledgerly password',
+    subject: 'Reset your HandyQuote password',
     html,
     text: `Reset your password (expires in 1 hour): ${opts.resetUrl}`,
   });
@@ -243,7 +243,7 @@ export async function sendAcceptedNotifyEmail(opts: {
       <p style="margin:0;">
         <a href="${escapeAttr(opts.quoteUrl)}"
            style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">
-          Open in Ledgerly
+          Open in HandyQuote
         </a>
       </p>`,
     footerNote: opts.businessName,

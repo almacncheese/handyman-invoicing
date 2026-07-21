@@ -25,7 +25,7 @@ export default async function BillingPage({ searchParams }: Props) {
         <div>
           <p className="page-kicker">Account</p>
           <h1 className="page-title">Plan &amp; trial</h1>
-          <p className="page-sub">Manage your Ledgerly Pro subscription.</p>
+          <p className="page-sub">Manage your HandyQuote Pro subscription.</p>
         </div>
       </div>
 

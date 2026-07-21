@@ -122,7 +122,7 @@ export default async function ClientPortalPage({ params }: Props) {
         </Section>
 
         <p style={{ textAlign: 'center', color: '#98a0c0', fontSize: 12, marginTop: 40 }}>
-          Powered by Ledgerly
+          Powered by HandyQuote
         </p>
       </div>
     </div>

@@ -51,5 +51,5 @@ export function appUrl(): string {
 
 /** Resend: set RESEND_API_KEY + RESEND_FROM_EMAIL in production for mail. */
 export function getResendFrom(): string {
-  return process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM || 'Ledgerly <onboarding@resend.dev>';
+  return process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM || 'HandyQuote <onboarding@resend.dev>';
 }

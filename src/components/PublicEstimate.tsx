@@ -518,7 +518,7 @@ export function PublicEstimate({
           </a>
           {estimate.business.phone && <span>{estimate.business.phone}</span>}
         </div>
-        <p className="text-center text-xs text-[var(--steel-dim)]">Powered by Ledgerly</p>
+        <p className="text-center text-xs text-[var(--steel-dim)]">Powered by HandyQuote</p>
       </main>
     </div>
   );

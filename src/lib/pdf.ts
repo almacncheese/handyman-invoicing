@@ -169,7 +169,7 @@ export function renderDocumentPdf(business: PdfBusiness, doc: PdfDocInput): Prom
 
       // Footer
       pdf.font('Helvetica').fontSize(8).fillColor(MUTED).text(
-        'Generated with Ledgerly',
+        'Generated with HandyQuote',
         left,
         pdf.page.height - 40,
         { width: contentWidth, align: 'center' },
