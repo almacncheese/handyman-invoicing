@@ -45,6 +45,7 @@ export function CardChargeForm({
   amountLabel,
   defaultFirstName,
   defaultLastName,
+  allowSaveCard = false,
   onSuccess,
 }: {
   endpoint: string;
@@ -53,11 +54,13 @@ export function CardChargeForm({
   amountLabel: string;
   defaultFirstName?: string;
   defaultLastName?: string;
+  allowSaveCard?: boolean;
   onSuccess: (payment: unknown) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scriptReady, setScriptReady] = useState(false);
+  const [saveCard, setSaveCard] = useState(false);
   // Pinned for the lifetime of one logical charge attempt — not regenerated on
   // every click (that would defeat the whole point of idempotency). Only
   // reset after a genuine decline, so a plain retry/timeout can't double-charge.
@@ -123,6 +126,7 @@ export function CardChargeForm({
                   zip: zipRef.current?.value || undefined,
                 },
                 ...extraBody,
+                ...(allowSaveCard ? { saveCard } : {}),
               }),
             });
             const data = await res.json();
@@ -167,6 +171,13 @@ export function CardChargeForm({
         <input ref={expYearRef} placeholder="YYYY" inputMode="numeric" autoComplete="cc-exp-year" className="input-plain" />
         <input ref={cvvRef} placeholder="CVV" inputMode="numeric" autoComplete="cc-csc" className="input-plain" />
       </div>
+
+      {allowSaveCard && (
+        <label className="flex items-center gap-2 text-sm text-[var(--muted)]" data-testid="save-card-checkbox">
+          <input type="checkbox" checked={saveCard} onChange={(e) => setSaveCard(e.target.checked)} />
+          Save this card for future payments
+        </label>
+      )}
 
       <button type="button" className="btn btn-primary w-full" onClick={submit} disabled={busy || !scriptReady}>
         {busy ? 'Processing…' : `Pay ${amountLabel}`}

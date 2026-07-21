@@ -87,6 +87,7 @@ export async function generateNextInvoice(sourceInvoiceId: string, businessId: s
         depositCents: source.depositCents,
         amountDueCents: source.totalCents,
         recurParentId: source.id,
+        savedMethodId: source.autoCharge ? source.savedMethodId : null,
       },
     });
 
@@ -110,6 +111,12 @@ export async function generateNextInvoice(sourceInvoiceId: string, businessId: s
     action: 'created',
     message: `Recurring invoice ${created.number} generated from ${source.number}`,
   });
+
+  // Off-session auto-charge the freshly generated invoice when configured.
+  if (source.autoCharge && source.savedMethodId) {
+    const { autoChargeInvoice } = await import('./saved-methods');
+    await autoChargeInvoice(created.id, businessId).catch(() => undefined);
+  }
 
   return created;
 }

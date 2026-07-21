@@ -30,6 +30,14 @@ export default async function InvoiceDetailPage({ params }: Props) {
   if (!invoice || invoice.businessId !== session.businessId) notFound();
   const lines = invoice.lineItems as QuoteLineItem[];
 
+  const savedMethods = invoice.quote.customerId
+    ? await prisma.savedPaymentMethod.findMany({
+        where: { businessId: session.businessId, customerId: invoice.quote.customerId },
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, brand: true, last4: true, provider: true },
+      })
+    : [];
+
   const billing = resolveBilling(business);
 
   return (
@@ -117,6 +125,9 @@ export default async function InvoiceDetailPage({ params }: Props) {
           lastReminderAt={invoice.lastReminderAt ? invoice.lastReminderAt.toISOString() : null}
           reminderCount={invoice.reminderCount}
           customerEmail={invoice.quote.customer?.email ?? null}
+          autoCharge={invoice.autoCharge}
+          savedMethodId={invoice.savedMethodId}
+          savedMethods={savedMethods}
         />
         <div className="panel h-fit">
           <div className="panel-head">

@@ -47,7 +47,7 @@ export type PaymentDbRow = {
 };
 
 export type CardChargeOutcome =
-  | { outcome: 'succeeded'; payment: PaymentDbRow }
+  | { outcome: 'succeeded'; payment: PaymentDbRow; savedMethod?: ChargeResult['savedMethod'] }
   | { outcome: 'failed'; errorMessage: string; payment: PaymentDbRow }
   | { outcome: 'in_flight' }
   | { outcome: 'key_reused_for_different_charge' };
@@ -247,5 +247,5 @@ export async function processCardCharge(params: CardChargeParams): Promise<CardC
     };
   }
 
-  return { outcome: 'succeeded', payment: settled.payment };
+  return { outcome: 'succeeded', payment: settled.payment, savedMethod: chargeResult.savedMethod };
 }

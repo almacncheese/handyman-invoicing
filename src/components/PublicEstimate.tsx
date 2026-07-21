@@ -386,6 +386,7 @@ export function PublicEstimate({
                               amountLabel={formatUsd(amountCents)}
                               defaultFirstName={firstName}
                               defaultLastName={rest.join(' ')}
+                              allowSaveCard
                               onSuccess={() => setPaidJustNow(true)}
                             />
                           </>

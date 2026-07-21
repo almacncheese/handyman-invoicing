@@ -43,6 +43,7 @@ const schema = z.object({
     })
     .optional(),
   sourceId: z.string().min(1).optional(),
+  saveCard: z.boolean().optional(),
   billTo: billToSchema,
 });
 
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
 
     const quote = await prisma.quote.findUnique({
       where: { publicToken: token },
-      include: { invoice: true },
+      include: { invoice: true, customer: true },
     });
     if (!quote || quote.status === 'void') {
       return jsonError('Not found', 404);
@@ -105,6 +106,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     }
 
     let metadata: Record<string, string>;
+    const wantSave = body.saveCard === true && Boolean(quote.customerId);
     if (config.provider === 'authorize_net') {
       if (!body.opaqueData) return jsonError('Missing card payment token', 422);
       metadata = {
@@ -113,6 +115,10 @@ export async function POST(req: NextRequest, ctx: Ctx) {
         // AuthNet invoiceNumber is a short display ref — use quote number, not the DB cuid
         invoiceNumber: (quote.number || quote.id).slice(0, 20),
       };
+      if (wantSave && quote.customerId) {
+        metadata.createProfile = 'true';
+        metadata.merchantCustomerId = quote.customerId;
+      }
     } else {
       if (!body.sourceId) return jsonError('Missing card payment token', 422);
       metadata = { sourceId: body.sourceId };
@@ -125,6 +131,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       amountCents,
       idempotencyKey: key,
       billTo: body.billTo,
+      customerEmail: quote.customer?.email ?? undefined,
       customerIp: clientIp(req),
       description: `Estimate ${quote.number || quote.id}`,
       metadata,
@@ -138,6 +145,35 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     }
     if (result.outcome === 'failed') {
       return jsonError(result.errorMessage, 402);
+    }
+
+    // Persist the vaulted card so the business can auto-charge future invoices.
+    if (result.outcome === 'succeeded' && result.savedMethod && quote.customerId) {
+      try {
+        const existing = await prisma.savedPaymentMethod.findFirst({
+          where: {
+            businessId: quote.businessId,
+            customerId: quote.customerId,
+            providerMethodId: result.savedMethod.providerMethodId,
+          },
+          select: { id: true },
+        });
+        if (!existing) {
+          await prisma.savedPaymentMethod.create({
+            data: {
+              businessId: quote.businessId,
+              customerId: quote.customerId,
+              provider: config.provider,
+              providerCustomerId: result.savedMethod.providerCustomerId,
+              providerMethodId: result.savedMethod.providerMethodId,
+              brand: result.savedMethod.brand ?? null,
+              last4: result.savedMethod.last4 ?? null,
+            },
+          });
+        }
+      } catch {
+        /* saving a card is best-effort — never fail the payment on it */
+      }
     }
 
     await logActivity({

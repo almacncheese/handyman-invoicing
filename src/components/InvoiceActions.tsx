@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { RECUR_INTERVALS } from '@/lib/recurring';
 
+type SavedMethod = { id: string; brand: string | null; last4: string | null; provider: string };
+
 type Props = {
   invoiceId: string;
   status: string;
@@ -13,6 +15,9 @@ type Props = {
   lastReminderAt: string | null;
   reminderCount: number;
   customerEmail: string | null;
+  autoCharge: boolean;
+  savedMethodId: string | null;
+  savedMethods: SavedMethod[];
 };
 
 export function InvoiceActions({
@@ -24,6 +29,9 @@ export function InvoiceActions({
   lastReminderAt,
   reminderCount,
   customerEmail,
+  autoCharge: autoChargeInit,
+  savedMethodId: savedMethodIdInit,
+  savedMethods,
 }: Props) {
   const router = useRouter();
   const [msg, setMsg] = useState<string | null>(null);
@@ -32,8 +40,12 @@ export function InvoiceActions({
   const [interval, setInterval] = useState(intervalInit || 'monthly');
   const [nextAt, setNextAt] = useState(nextInit);
   const [reminders, setReminders] = useState(reminderCount);
+  const [autoCharge, setAutoCharge] = useState(autoChargeInit);
+  const [selectedMethod, setSelectedMethod] = useState(savedMethodIdInit || savedMethods[0]?.id || '');
 
   const payable = status !== 'paid' && status !== 'void';
+  const hasSaved = savedMethods.length > 0;
+  const methodLabel = (m: SavedMethod) => `${m.brand || 'Card'} ···· ${m.last4 || '••••'}`;
 
   async function sendReminder() {
     setBusy(true);
@@ -103,6 +115,43 @@ export function InvoiceActions({
       router.refresh();
     } catch (e) {
       setMsg(e instanceof Error ? e.message : 'Failed');
+      setBusy(false);
+    }
+  }
+
+  async function saveAutoCharge(enabled: boolean) {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await fetch(`/api/invoices/${invoiceId}/auto-charge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled, savedMethodId: enabled ? selectedMethod : null }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      setAutoCharge(data.autoCharge);
+      setMsg(data.autoCharge ? 'Auto-charge enabled for this schedule' : 'Auto-charge turned off');
+      router.refresh();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : 'Failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function chargeNow() {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await fetch(`/api/invoices/${invoiceId}/charge-saved`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      setMsg('Saved card charged successfully');
+      router.refresh();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : 'Failed');
+    } finally {
       setBusy(false);
     }
   }
@@ -200,6 +249,65 @@ export function InvoiceActions({
             </>
           )}
         </div>
+
+        {hasSaved && (
+          <div className="rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-2)] p-3" data-testid="saved-card-section">
+            <p className="section-label !mb-1">Saved card</p>
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <select
+                className="line-type"
+                value={selectedMethod}
+                onChange={(e) => setSelectedMethod(e.target.value)}
+                data-testid="saved-method-select"
+              >
+                {savedMethods.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {methodLabel(m)}
+                  </option>
+                ))}
+              </select>
+              {payable && (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  disabled={busy}
+                  onClick={chargeNow}
+                  data-testid="charge-saved-now-btn"
+                >
+                  Charge now
+                </button>
+              )}
+            </div>
+            {recurring &&
+              (autoCharge ? (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-[var(--success)]">Auto-charges each cycle</span>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    disabled={busy}
+                    onClick={() => saveAutoCharge(false)}
+                    data-testid="autocharge-off-btn"
+                  >
+                    Turn off
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm w-full"
+                  disabled={busy}
+                  onClick={() => saveAutoCharge(true)}
+                  data-testid="autocharge-on-btn"
+                >
+                  Auto-charge this card each cycle
+                </button>
+              ))}
+            {!recurring && (
+              <p className="text-xs text-[var(--muted)]">Make this invoice recurring to auto-charge each cycle.</p>
+            )}
+          </div>
+        )}
 
         {msg && (
           <p className="alert alert-success" role="status" data-testid="invoice-action-msg">

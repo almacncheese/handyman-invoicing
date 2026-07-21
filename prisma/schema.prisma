@@ -48,6 +48,7 @@ model Business {
   templates  LineTemplate[]
   activities Activity[]
   paymentGatewayConfig PaymentGatewayConfig?
+  savedPaymentMethods  SavedPaymentMethod[]
 }
 
 /// One active payment gateway per tenant (re-save to switch) — each contractor
@@ -117,9 +118,28 @@ model Customer {
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   quotes   Quote[]
+  savedPaymentMethods SavedPaymentMethod[]
 
   @@index([businessId])
   @@index([businessId, name])
+}
+
+model SavedPaymentMethod {
+  id                 String   @id @default(cuid())
+  businessId         String
+  customerId         String
+  provider           String   // authorize_net | stripe
+  providerCustomerId String   // AuthNet customerProfileId / Stripe customer id
+  providerMethodId   String   // AuthNet paymentProfileId / Stripe payment_method id
+  brand              String?
+  last4              String?
+  createdAt          DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([customerId])
 }
 
 model LineTemplate {
@@ -204,6 +224,8 @@ model Invoice {
   recurParentId   String?
   lastReminderAt  DateTime?
   reminderCount   Int       @default(0)
+  autoCharge      Boolean   @default(false)
+  savedMethodId   String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

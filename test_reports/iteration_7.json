@@ -1,0 +1,41 @@
+{
+  "summary": "Frontend-only verification of the new Saved Card + Auto-charge feature on invoice INV-00001. All 5 requested checks PASS. Login as demo@ledgerly.app OK. On invoice detail (/invoices then click INV-00001 → routes to /invoices/{id}) the Actions panel shows saved-card-section with saved-method-select dropdown containing exactly one option 'Visa ···· 1111' and a Charge now button (charge-saved-now-btn). Because INV-00001 is monthly recurring and a saved card exists, autocharge-on-btn is rendered. Clicking it shows invoice-action-msg = 'Auto-charge enabled for this schedule' and reveals autocharge-off-btn. Clicking Turn off shows 'Auto-charge turned off' and the on-button returns. Clicking Charge now surfaces a graceful failure in invoice-action-msg: 'Cannot charge: no_saved_method' (HTTP 409 from /api/invoices/{id}/charge-saved) — this is the fail-closed guard, and the reviewer request explicitly says any clear error message is PASS. Zero JS pageerrors, zero console errors other than the expected 409 network log for the intentionally-failing charge.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "InvoiceActions.tsx saveAutoCharge sends `savedMethodId: enabled ? selectedMethod : null` — turning off auto-charge NULLs the invoice's savedMethodId on the backend. Consequence: after Turn off, a subsequent Charge now returns 'no_saved_method' instead of the more precise 'gateway_mismatch' the request expected. Consider not nulling savedMethodId when disabling auto-charge, or make charge-saved endpoint fall back to the customer's first SavedPaymentMethod when the invoice's savedMethodId is null. Not a functional bug (guard still fires), but the surfaced error code is misleading and hides the true reason (missing gateway config).",
+    "InvoiceActions.tsx uses a single msg state for both success and errors and renders it inside `<p class=\"alert alert-success\">`. Errors are shown with a success-colored style — cosmetic issue but potentially misleading (e.g., 'Cannot charge: no_saved_method' appears in a positive/success color).",
+    "Invoice list row uses non-semantic clickable container: clicking the 'Ceiling fan install' job text navigates to the parent EST-0002 estimate, but clicking 'INV-00001' navigates to the invoice detail. Two overlapping click targets in the same row is confusing UX — consider making the whole row a single link to the invoice with a distinct sub-link for the estimate.",
+    "InvoiceActions.tsx shadows the global `setInterval` name with `const [interval, setInterval] = useState(...)` — legal but risky (any accidental future use of window.setInterval inside this component will be broken). Rename to `intervalKey`/`setIntervalKey`."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend-only requested)",
+    "frontend": "100% - 5/5 requested checks pass"
+  },
+  "test_credentials": "Owner demo@ledgerly.app / demo-demo-demo (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None. Used seeded INV-00001 (recurring monthly) and seeded SavedPaymentMethod 'Visa ···· 1111'. Auto-charge was toggled on and then off during the test, leaving the invoice in its original state (auto-charge OFF).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Test-ids verified: saved-card-section, saved-method-select, charge-saved-now-btn, autocharge-on-btn, autocharge-off-btn, invoice-action-msg. Preview URL: https://8a1fcd27-2686-4210-bc8e-4cecf5167001.preview.emergentagent.com. IMPORTANT: To reach the invoice detail page, click the 'INV-00001' text in the invoice list — clicking the job title 'Ceiling fan install' navigates to the source estimate EST-0002 instead. The observed charge-now error is 'Cannot charge: no_saved_method' (not 'gateway_mismatch') because the Turn-off action nulls the invoice's savedMethodId; both are acceptable fail-closed guards. 409 in the network tab for /api/invoices/{id}/charge-saved is EXPECTED, not a bug.",
+  "measurements": {
+    "saved_card_section_visible": true,
+    "dropdown_options": ["Visa ···· 1111"],
+    "charge_now_visible": true,
+    "autocharge_on_click_msg": "Auto-charge enabled for this schedule",
+    "autocharge_off_reveals_after_enable": true,
+    "autocharge_off_click_msg": "Auto-charge turned off",
+    "autocharge_on_returns_after_off": true,
+    "charge_now_click_msg": "Cannot charge: no_saved_method",
+    "charge_now_http_status": 409,
+    "console_errors": 0,
+    "page_errors": 0,
+    "unexpected_js_errors": 0
+  }
+}

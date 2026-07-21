@@ -20,6 +20,7 @@ export function PaymentCardForm({
   amountLabel,
   defaultFirstName,
   defaultLastName,
+  allowSaveCard = false,
   onSuccess,
 }: {
   gatewayConfig: PublicGatewayConfig | null;
@@ -30,6 +31,7 @@ export function PaymentCardForm({
   amountLabel: string;
   defaultFirstName?: string;
   defaultLastName?: string;
+  allowSaveCard?: boolean;
   onSuccess: (payment: unknown) => void;
 }) {
   if (!gatewayConfig) return null;
@@ -47,6 +49,7 @@ export function PaymentCardForm({
         amountLabel={amountLabel}
         defaultFirstName={defaultFirstName}
         defaultLastName={defaultLastName}
+        allowSaveCard={allowSaveCard}
         onSuccess={onSuccess}
       />
     );

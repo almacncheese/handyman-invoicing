@@ -30,6 +30,13 @@ export type ChargeResult = {
   authCode?: string;
   errorCode?: string;
   errorMessage?: string;
+  /** Set when a charge also vaults a reusable payment method (Authorize.net CIM). */
+  savedMethod?: {
+    providerCustomerId: string;
+    providerMethodId: string;
+    brand?: string;
+    last4?: string;
+  };
   raw?: unknown;
 };
 
